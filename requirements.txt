@@ -1,1 +1,4 @@
 pyinstaller
+ttkthemes
+tkinter-tooltip
+airium

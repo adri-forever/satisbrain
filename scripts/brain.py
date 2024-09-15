@@ -1,4 +1,4 @@
-import json, copy, timeit
+import json, copy, timeit, airium, webbrowser
 from typing import Literal
 
 """
@@ -6,7 +6,16 @@ for future: take into account if water is produced somewhere as a byproduct, sub
 """
 
 ### Functions ###
-def build_item_to_recipes() -> dict:
+def pretty_dict_print(dict_: dict, deep: bool = True, level: int = 0):
+    indent = level*'\t'
+    for key, value in dict_.items():
+        if isinstance(value, dict) and deep:
+            print(indent+f'{key} :')
+            pretty_dict_print(value, deep=True, level=level+1)
+        else:
+            print(f'{indent+key} : {value}')
+    
+def build_item_to_recipes(alternates: bool = True) -> dict:
     data_itemtorecipes = {}
     
     for item_k in data_items:
@@ -15,7 +24,11 @@ def build_item_to_recipes() -> dict:
         for recipe_k, recipe_v in data_recipes.items():
             products = recipe_v['products']
             for product in products:
-                if product['item']==item_k:
+                # Append recipe if:
+                # recipe produces selected item
+                # and
+                # recipe is default, unless we asked for
+                if product['item']==item_k and (not recipe_v['alternate'] or alternates):
                     data_itemtorecipes[item_k].append(recipe_k)
     
     return data_itemtorecipes
@@ -28,7 +41,7 @@ def build_baseresources() -> set[str]:
     
     Includes things like radioactive waste because its not crafted but byproduct of generator. whatever
     """
-    data_baseresources = {item for item, recipes in data_itemtorecipes.items() if not recipes}
+    data_baseresources = {item for item, recipes in data_itemtodefaultrecipes.items() if not recipes}
     data_baseresources.add('Desc_Water_C')
     
     return data_baseresources
@@ -150,10 +163,12 @@ def get_child_items(item: str, alternates: list[str] = [], deep: bool = True, pa
     #Filter out recipes that are projected to be used higher in the chain to prevent looping
     recipes = [rec for rec in recipes
                if rec not in parent_recipes # prevent looping
-               or not data_recipes[rec]['producedIn'] # cant compute whats not in a machine
-               or not data_recipes[rec]['alternate'] # keep defaults
-               or rec in alternates # and selected alternates
-               ]
+               and data_recipes[rec]['producedIn'] # cant compute whats not in a machine
+               and(
+                   not data_recipes[rec]['alternate'] # keep defaults
+                   or rec in alternates # and selected alternates
+                   )
+              ]
     
     #Select desired recipe
     # use default, but if an alternate is given use it and immediately break out of loop
@@ -192,6 +207,182 @@ def get_child_items(item: str, alternates: list[str] = [], deep: bool = True, pa
     
     return children, parent_recipes
 
+def get_production_plan(item: str, qty: float, recipes: list[str]):
+    # Contains steps
+    production_plan = {}
+    
+    recipe = [rec for rec in recipes if rec in data_itemtorecipes[item]][0]
+    item_to_recipe = {item: recipe}
+    recipe_data = data_recipes[recipe]
+    if qty <= 0:
+        print('Cannot produce negative amount of items. Creating plan for singular machine')
+        qty = 60 * recipe_data['products'][0]['amount'] / recipe_data['time'] # /min
+    
+    # For calculation
+    itempool = {item: qty}
+    
+    for i in range(MAX_ITER): #change to while once we got the condition
+        #Make room for current tier
+        tiername = f'tier{i}'
+        production_plan[tiername] = {}
+        
+        #List all items to produce in said tier
+        left_items = [item for item, iqty in itempool.items() if iqty>0 and item not in data_baseresources]
+        if not left_items:
+            break # if no items are left to craft, exit loop
+        
+        for item in left_items:
+            recipe = [rec for rec in data_itemtorecipes[item] if rec in recipes][0]
+            recipe_data = data_recipes[recipe]
+            
+            # decide number of machines for recipe: divide asked quantity by recipe rate (/min)
+            machine_qty = itempool[item] / (60 * recipe_data['products'][0]['amount'] / recipe_data['time'])
+            
+            production_plan[tiername][recipe] = machine_qty
+            for product in recipe_data['products']:
+                product_item = product['item']
+                product_qty = 60 * machine_qty * product['amount'] / recipe_data['time']
+                
+                if product_item not in itempool:
+                    itempool[product_item] = 0
+                itempool[product_item] -= product_qty
+
+            for ingredient in recipe_data['ingredients']:
+                ingr_item = ingredient['item']
+                ingr_qty = 60 * machine_qty * ingredient['amount'] / recipe_data['time']
+                
+                if ingr_item not in itempool:
+                    itempool[ingr_item] = 0
+                itempool[ingr_item] += ingr_qty
+    
+        # print('Item pool:')
+        # print(itempool)
+        # print('Production plan:')
+        # print(production_plan[tiername])
+    
+    # Refine plan
+    #Downwards: concatenate recipes that appear several time to lowest tier
+    for recipe in recipes:
+        lowest_tier = ''
+        tiers = []
+        total = 0
+        for tier, plan in production_plan.items():
+            if recipe in plan:
+                lowest_tier = tier
+                tiers.append(tier)
+                total = plan[recipe]
+        
+        for tier in tiers:
+            production_plan[tier].pop(recipe)
+        production_plan[lowest_tier][recipe] = total
+    
+    #Final cleanup: remove empty tiers
+    topop = []
+    for tier, plan in production_plan.items():
+        if not plan:
+            topop.append(tier)
+    for tier in topop:
+        production_plan.pop(tier)
+    
+    base_resources = {item: value for item, value in itempool.items() if value>0}
+    production_plan['base_resources'] = base_resources
+    
+    return production_plan
+
+def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
+    
+    products = recipe_data['products']
+    ingredients = recipe_data['ingredients']
+    
+    machine = data_buildings[recipe_data['producedIn'][0]]['name']
+    
+    with a.table():
+        with a.tr():
+            a.th(_t='')
+            a.th(_t='Rate (/min)')
+            a.th(_t='Total (/min)')
+            a.th(_t='')
+            a.th(_t='Produced in')
+            a.th(_t='Amount')
+        with a.tr():
+            a.th(_t='Products')
+        for i, product in enumerate(products):
+            with a.tr():
+                prd_name = data_items[product['item']]['name']
+                rate = 60 * product['amount'] / recipe_data['time']
+                a.td(_t=prd_name)
+                a.td(_t=rate)
+                a.td(_t=qty * rate, klass='high')
+                if i==0:
+                    a.td(_t='')
+                    a.td(_t=machine)
+                    a.td(_t=qty)
+        with a.tr():
+            a.th(_t='Ingredients')
+        for i, ingredient in enumerate(ingredients):
+            with a.tr():
+                ingr_name = data_items[ingredient['item']]['name']
+                rate = 60 * ingredient['amount'] / recipe_data['time']
+                a.td(_t=ingr_name)
+                a.td(_t=rate)
+                a.td(_t=qty * rate, klass='high')      
+
+def generate_tier(a: airium.Airium, tierno: int, tier: dict):
+    with a.button(type='button', klass='collapsible'):
+        a(f'Stage {tierno}')
+    with a.div(klass='content'):
+        for recipe in tier:
+            recipe_data = data_recipes[recipe]
+            with a.button(type='button', klass='collapsible'):
+                a(recipe_data['name'])
+            with a.div(klass='content'):
+                generate_recipe(a, recipe_data, tier[recipe])
+
+def generate_resources(a: airium.Airium, resources: dict):
+    # with a.button(type='button', klass='collapsible'):
+    #     a('Resources')
+    a.h2(_t='Resources')
+    with a.p(klass='content'):
+        with a.table():
+            with a.tr():
+                a.th(_t='Resource')
+                a.th(_t='Total (/min)')
+            for resource, qty in resources.items():
+                res_name = data_items[resource]['name']
+                with a.tr():
+                    a.td(_t=res_name)
+                    a.td(_t=qty)
+
+def generate_html(production_plan: dict, path: str):
+    a = airium.Airium()
+    
+    key = list(production_plan[list(production_plan.keys())[0]].keys())[0]
+    base_recipe = data_recipes[key]
+    recipe_name = base_recipe['name']
+    
+    a('<!DOCTYPE html>')
+    with a.html(lang='en'):
+        with a.head():
+            a.meta(content='width=device-width, initial-scale=1', name='viewport', charset='utf-8')
+            a.title(_t=f'Satisbrain: {recipe_name}')
+            with a.style():
+                a(style)
+        with a.body():
+            a.h1(_t=f'Production plan: {recipe_name}')
+            for i, tier in enumerate(production_plan):
+                if i==0:
+                    generate_recipe(a, base_recipe, production_plan[tier][key])
+                elif 'tier' in tier:
+                    generate_tier(a, i, production_plan[tier])
+                else:
+                    generate_resources(a, production_plan[tier])
+        with a.script():
+            a(script)
+    
+    html = str(a).encode('utf-8')
+    with open(path, 'wb') as f:
+        f.write(html)
+
 ### Script code ###
 try:
     #Load data
@@ -212,26 +403,103 @@ data_buildings = data['buildings']
 
 #Generate item to recipes
 data_itemtorecipes = build_item_to_recipes()
+data_itemtodefaultrecipes = build_item_to_recipes(alternates=False)
 
 #Generate base resources
 data_baseresources = build_baseresources()
 
+# Prevent infinite looping
+MAX_ITER = 1000
+
+# Web shit
+style = """body {
+	background-color: #333;
+}
+
+h1 {
+	color: white;
+	font-family: "Segoe UI", sans-serif;
+}
+
+table {
+	padding: 5px 0 5px;
+}
+
+td, th {
+	padding: 1px 5px;
+}
+
+.collapsible {
+	background-color: #555;
+	color: white;
+	cursor: pointer;
+	padding: 10px;
+	width: 100%;
+	border: none;
+	text-align: left;
+	outline: none;
+	font-size: 16px;
+	font-family: "Segoe UI", sans-serif;
+}
+
+.collapsible:hover {
+	background-color: #FA9649;
+}
+.active {
+	background-color: #777;
+}
+
+.content {
+	color: white;
+	padding: 0 18px;
+	display: none;
+	overflow: hidden;
+	background-color: #333;
+	font-family: "Segoe UI", sans-serif;
+}
+
+.high {
+	color: #FA9649
+}"""
+
+script = """var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+	coll[i].addEventListener("click", function() {
+		this.classList.toggle("active");
+		var content = this.nextElementSibling;
+		if (content.style.display === "block") {
+			content.style.display = "none";
+		} else {
+		content.style.display = "block";
+		}
+	});
+}"""
+
 ### Main code ###
 if __name__=='__main__':
-    # exact, inexact = search_object('steel ingot')
-    # print('Exact results:')
-    # for res in exact:
-    #     print(res)
-    # print('Inexact results:')
-    # for res in inexact:
-    #     print(res)
-        
-    # if exact:
-    #     print('Details for first result:\n', get_details(exact[1][1]))
+    #investigate why fuel does not work
     
-    exact, inexact = search_object('liquid biofuel', 'items')
+    exact, inexact = search_object('uranium fuel rod', 'items')
     print('Exact: ', exact)
-    children, recipes = get_child_items(exact[0][1])
+    if exact:
+        item = exact[0][1]
+    else:
+        print('No corresponding item found. Exiting')
+        quit()
+    children, recipes = get_child_items(item)
     print('Child items: ', children)
     print('Child recipes: ', recipes)
     
+    qty = 10
+    production_plan = get_production_plan(item, qty, recipes)
+    print('\t--- PRODUCTION PLAN ---')
+    pretty_dict_print(production_plan)
+    
+    path = 'output\\test.html'
+    generate_html(production_plan, path)
+    
+    webbrowser.open(path)
+    
+    print('Travail terminé !')

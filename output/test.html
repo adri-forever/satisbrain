@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta content="width=device-width, initial-scale=1" name="viewport" charset="utf-8" />
+    <title>Satisbrain: Uranium Fuel Rod</title>
+    <style>
+      body {
+	background-color: #333;
+}
+
+h1 {
+	color: white;
+	font-family: "Segoe UI", sans-serif;
+}
+
+table {
+	padding: 5px 0 5px;
+}
+
+td, th {
+	padding: 1px 5px;
+}
+
+.collapsible {
+	background-color: #555;
+	color: white;
+	cursor: pointer;
+	padding: 10px;
+	width: 100%;
+	border: none;
+	text-align: left;
+	outline: none;
+	font-size: 16px;
+	font-family: "Segoe UI", sans-serif;
+}
+
+.collapsible:hover {
+	background-color: #FA9649;
+}
+.active {
+	background-color: #777;
+}
+
+.content {
+	color: white;
+	padding: 0 18px;
+	display: none;
+	overflow: hidden;
+	background-color: #333;
+	font-family: "Segoe UI", sans-serif;
+}
+
+.high {
+	color: #FA9649
+}
+    </style>
+  </head>
+  <body>
+    <h1>Production plan: Uranium Fuel Rod</h1>
+    <table>
+      <tr>
+        <th></th>
+        <th>Rate (/min)</th>
+        <th>Total (/min)</th>
+        <th></th>
+        <th>Produced in</th>
+        <th>Amount</th>
+      </tr>
+      <tr>
+        <th>Products</th>
+      </tr>
+      <tr>
+        <td>Uranium Fuel Rod</td>
+        <td>0.4</td>
+        <td class="high">10.0</td>
+        <td></td>
+        <td>Manufacturer</td>
+        <td>25.0</td>
+      </tr>
+      <tr>
+        <th>Ingredients</th>
+      </tr>
+      <tr>
+        <td>Encased Uranium Cell</td>
+        <td>20.0</td>
+        <td class="high">500.0</td>
+      </tr>
+      <tr>
+        <td>Encased Industrial Beam</td>
+        <td>1.2</td>
+        <td class="high">30.0</td>
+      </tr>
+      <tr>
+        <td>Electromagnetic Control Rod</td>
+        <td>2.0</td>
+        <td class="high">50.0</td>
+      </tr>
+    </table>
+    <button type="button" class="collapsible">
+      Stage 1
+    </button>
+    <div class="content">
+      <button type="button" class="collapsible">
+        Electromagnetic Control Rod
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Electromagnetic Control Rod</td>
+            <td>4.0</td>
+            <td class="high">50.0</td>
+            <td></td>
+            <td>Assembler</td>
+            <td>12.5</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Stator</td>
+            <td>6.0</td>
+            <td class="high">75.0</td>
+          </tr>
+          <tr>
+            <td>AI Limiter</td>
+            <td>4.0</td>
+            <td class="high">50.0</td>
+          </tr>
+        </table>
+      </div>
+      <button type="button" class="collapsible">
+        Encased Industrial Beam
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Encased Industrial Beam</td>
+            <td>6.0</td>
+            <td class="high">30.0</td>
+            <td></td>
+            <td>Assembler</td>
+            <td>5.0</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Steel Beam</td>
+            <td>24.0</td>
+            <td class="high">120.0</td>
+          </tr>
+          <tr>
+            <td>Concrete</td>
+            <td>30.0</td>
+            <td class="high">150.0</td>
+          </tr>
+        </table>
+      </div>
+      <button type="button" class="collapsible">
+        Encased Uranium Cell
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Encased Uranium Cell</td>
+            <td>25.0</td>
+            <td class="high">500.0</td>
+            <td></td>
+            <td>Blender</td>
+            <td>20.0</td>
+          </tr>
+          <tr>
+            <td>Sulfuric Acid</td>
+            <td>10.0</td>
+            <td class="high">200.0</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Uranium</td>
+            <td>50.0</td>
+            <td class="high">1000.0</td>
+          </tr>
+          <tr>
+            <td>Concrete</td>
+            <td>15.0</td>
+            <td class="high">300.0</td>
+          </tr>
+          <tr>
+            <td>Sulfuric Acid</td>
+            <td>40.0</td>
+            <td class="high">800.0</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <button type="button" class="collapsible">
+      Stage 2
+    </button>
+    <div class="content">
+      <button type="button" class="collapsible">
+        Concrete
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Concrete</td>
+            <td>15.0</td>
+            <td class="high">450.0</td>
+            <td></td>
+            <td>Constructor</td>
+            <td>30.0</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Limestone</td>
+            <td>45.0</td>
+            <td class="high">1350.0</td>
+          </tr>
+        </table>
+      </div>
+      <button type="button" class="collapsible">
+        Sulfuric Acid
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Sulfuric Acid</td>
+            <td>50.0</td>
+            <td class="high">600.0</td>
+            <td></td>
+            <td>Refinery</td>
+            <td>12.0</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Sulfur</td>
+            <td>50.0</td>
+            <td class="high">600.0</td>
+          </tr>
+          <tr>
+            <td>Water</td>
+            <td>50.0</td>
+            <td class="high">600.0</td>
+          </tr>
+        </table>
+      </div>
+      <button type="button" class="collapsible">
+        Stator
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Stator</td>
+            <td>5.0</td>
+            <td class="high">75.0</td>
+            <td></td>
+            <td>Assembler</td>
+            <td>15.0</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Steel Pipe</td>
+            <td>15.0</td>
+            <td class="high">225.0</td>
+          </tr>
+          <tr>
+            <td>Wire</td>
+            <td>40.0</td>
+            <td class="high">600.0</td>
+          </tr>
+        </table>
+      </div>
+      <button type="button" class="collapsible">
+        AI Limiter
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>AI Limiter</td>
+            <td>5.0</td>
+            <td class="high">50.0</td>
+            <td></td>
+            <td>Assembler</td>
+            <td>10.0</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Copper Sheet</td>
+            <td>25.0</td>
+            <td class="high">250.0</td>
+          </tr>
+          <tr>
+            <td>Quickwire</td>
+            <td>100.0</td>
+            <td class="high">1000.0</td>
+          </tr>
+        </table>
+      </div>
+      <button type="button" class="collapsible">
+        Steel Beam
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Steel Beam</td>
+            <td>15.0</td>
+            <td class="high">120.0</td>
+            <td></td>
+            <td>Constructor</td>
+            <td>8.0</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Steel Ingot</td>
+            <td>60.0</td>
+            <td class="high">480.0</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <button type="button" class="collapsible">
+      Stage 3
+    </button>
+    <div class="content">
+      <button type="button" class="collapsible">
+        Quickwire
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Quickwire</td>
+            <td>60.0</td>
+            <td class="high">1000.0000000000001</td>
+            <td></td>
+            <td>Constructor</td>
+            <td>16.666666666666668</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Caterium Ingot</td>
+            <td>12.0</td>
+            <td class="high">200.0</td>
+          </tr>
+        </table>
+      </div>
+      <button type="button" class="collapsible">
+        Steel Pipe
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Steel Pipe</td>
+            <td>20.0</td>
+            <td class="high">225.0</td>
+            <td></td>
+            <td>Constructor</td>
+            <td>11.25</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Steel Ingot</td>
+            <td>30.0</td>
+            <td class="high">337.5</td>
+          </tr>
+        </table>
+      </div>
+      <button type="button" class="collapsible">
+        Wire
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Wire</td>
+            <td>30.0</td>
+            <td class="high">600.0</td>
+            <td></td>
+            <td>Constructor</td>
+            <td>20.0</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Copper Ingot</td>
+            <td>15.0</td>
+            <td class="high">300.0</td>
+          </tr>
+        </table>
+      </div>
+      <button type="button" class="collapsible">
+        Copper Sheet
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Copper Sheet</td>
+            <td>10.0</td>
+            <td class="high">250.0</td>
+            <td></td>
+            <td>Constructor</td>
+            <td>25.0</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Copper Ingot</td>
+            <td>20.0</td>
+            <td class="high">500.0</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <button type="button" class="collapsible">
+      Stage 4
+    </button>
+    <div class="content">
+      <button type="button" class="collapsible">
+        Copper Ingot
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Copper Ingot</td>
+            <td>30.0</td>
+            <td class="high">800.0</td>
+            <td></td>
+            <td>Smelter</td>
+            <td>26.666666666666668</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Copper Ore</td>
+            <td>30.0</td>
+            <td class="high">800.0</td>
+          </tr>
+        </table>
+      </div>
+      <button type="button" class="collapsible">
+        Steel Ingot
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Steel Ingot</td>
+            <td>45.0</td>
+            <td class="high">337.5</td>
+            <td></td>
+            <td>Foundry</td>
+            <td>7.5</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Iron Ore</td>
+            <td>45.0</td>
+            <td class="high">337.5</td>
+          </tr>
+          <tr>
+            <td>Coal</td>
+            <td>45.0</td>
+            <td class="high">337.5</td>
+          </tr>
+        </table>
+      </div>
+      <button type="button" class="collapsible">
+        Caterium Ingot
+      </button>
+      <div class="content">
+        <table>
+          <tr>
+            <th></th>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>Caterium Ingot</td>
+            <td>15.0</td>
+            <td class="high">200.00000000000003</td>
+            <td></td>
+            <td>Smelter</td>
+            <td>13.333333333333336</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Caterium Ore</td>
+            <td>45.0</td>
+            <td class="high">600.0000000000001</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <h2>Resources</h2>
+    <p class="content">
+      <table>
+        <tr>
+          <th>Resource</th>
+          <th>Total (/min)</th>
+        </tr>
+        <tr>
+          <td>Uranium</td>
+          <td>1000.0</td>
+        </tr>
+        <tr>
+          <td>Sulfur</td>
+          <td>600.0</td>
+        </tr>
+        <tr>
+          <td>Water</td>
+          <td>600.0</td>
+        </tr>
+        <tr>
+          <td>Limestone</td>
+          <td>1350.0</td>
+        </tr>
+        <tr>
+          <td>Iron Ore</td>
+          <td>817.5</td>
+        </tr>
+        <tr>
+          <td>Coal</td>
+          <td>817.5</td>
+        </tr>
+        <tr>
+          <td>Copper Ore</td>
+          <td>800.0</td>
+        </tr>
+        <tr>
+          <td>Caterium Ore</td>
+          <td>600.0000000000001</td>
+        </tr>
+      </table>
+    </p>
+  </body>
+  <script>
+    var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+	coll[i].addEventListener("click", function() {
+		this.classList.toggle("active");
+		var content = this.nextElementSibling;
+		if (content.style.display === "block") {
+			content.style.display = "none";
+		} else {
+		content.style.display = "block";
+		}
+	});
+}
+  </script>
+</html>
