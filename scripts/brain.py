@@ -328,8 +328,7 @@ def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
                 a.td(_t=qty * rate, klass='high')      
 
 def generate_tier(a: airium.Airium, tierno: int, tier: dict):
-    with a.button(type='button', klass='collapsible'):
-        a(f'Stage {tierno}')
+    a.button(type='button', klass='collapsible', _t=f'Stage {tierno}')
     with a.div(klass='content'):
         for recipe in tier:
             recipe_data = data_recipes[recipe]
@@ -416,7 +415,7 @@ style = """body {
 	background-color: #333;
 }
 
-h1 {
+h1, h2 {
 	color: white;
 	font-family: "Segoe UI", sans-serif;
 }
@@ -427,6 +426,9 @@ table {
 
 td, th {
 	padding: 1px 5px;
+	font-size: 16px;
+	font-family: "Segoe UI", sans-serif;
+	color: white;
 }
 
 .collapsible {
