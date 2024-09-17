@@ -16,6 +16,10 @@ def pretty_dict_print(dict_: dict, deep: bool = True, level: int = 0):
             print(f'{indent+key} : {value}')
     
 def build_item_to_recipes(alternates: bool = True) -> dict:
+    """
+    To change: DONT TAKE PACKAGER/UNPACKAGER
+    or make oil baseresource ?
+    """
     data_itemtorecipes = {}
     
     for item_k in data_items:
@@ -43,6 +47,7 @@ def build_baseresources() -> set[str]:
     """
     data_baseresources = {item for item, recipes in data_itemtodefaultrecipes.items() if not recipes}
     data_baseresources.add('Desc_Water_C')
+    data_baseresources.add('Desc_LiquidOil_C')
     
     return data_baseresources
 
@@ -254,7 +259,10 @@ def get_production_plan(item: str, qty: float, recipes: list[str]):
                 if ingr_item not in itempool:
                     itempool[ingr_item] = 0
                 itempool[ingr_item] += ingr_qty
-    
+
+        if i==MAX_ITER-1:
+            raise LookupError(f'Max recipe iterations reached. Looping may have occured. Production plan: {production_plan}')
+        
         # print('Item pool:')
         # print(itempool)
         # print('Production plan:')
@@ -311,12 +319,12 @@ def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
                 prd_name = data_items[product['item']]['name']
                 rate = 60 * product['amount'] / recipe_data['time']
                 a.td(_t=prd_name)
-                a.td(_t=rate)
-                a.td(_t=qty * rate, klass='high')
+                a.td(_t='{:g}'.format(rate))
+                a.td(_t='{:g}'.format(qty * rate), klass='high')
                 if i==0:
                     a.td(_t='')
                     a.td(_t=machine)
-                    a.td(_t=qty)
+                    a.td(_t='{:g}'.format(qty))
         with a.tr():
             a.th(_t='Ingredients')
         for i, ingredient in enumerate(ingredients):
@@ -324,8 +332,8 @@ def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
                 ingr_name = data_items[ingredient['item']]['name']
                 rate = 60 * ingredient['amount'] / recipe_data['time']
                 a.td(_t=ingr_name)
-                a.td(_t=rate)
-                a.td(_t=qty * rate, klass='high')      
+                a.td(_t='{:g}'.format(rate))
+                a.td(_t='{:g}'.format(qty * rate), klass='high')    
 
 def generate_tier(a: airium.Airium, tierno: int, tier: dict):
     a.button(type='button', klass='collapsible', _t=f'Stage {tierno}')
@@ -338,19 +346,15 @@ def generate_tier(a: airium.Airium, tierno: int, tier: dict):
                 generate_recipe(a, recipe_data, tier[recipe])
 
 def generate_resources(a: airium.Airium, resources: dict):
-    # with a.button(type='button', klass='collapsible'):
-    #     a('Resources')
-    a.h2(_t='Resources')
-    with a.p(klass='content'):
-        with a.table():
+    with a.table():
+        with a.tr():
+            a.th(_t='Resource')
+            a.th(_t='Total (/min)')
+        for resource, qty in resources.items():
+            res_name = data_items[resource]['name']
             with a.tr():
-                a.th(_t='Resource')
-                a.th(_t='Total (/min)')
-            for resource, qty in resources.items():
-                res_name = data_items[resource]['name']
-                with a.tr():
-                    a.td(_t=res_name)
-                    a.td(_t=qty)
+                a.td(_t=res_name)
+                a.td(_t='{:g}'.format(qty))
 
 def generate_html(production_plan: dict, path: str):
     a = airium.Airium()
@@ -370,11 +374,16 @@ def generate_html(production_plan: dict, path: str):
             a.h1(_t=f'Production plan: {recipe_name}')
             for i, tier in enumerate(production_plan):
                 if i==0:
-                    generate_recipe(a, base_recipe, production_plan[tier][key])
+                    with a.div(klass='row'):
+                        with a.div(klass='column'):
+                            a.h2(_t='Recipe')
+                            generate_recipe(a, base_recipe, production_plan[tier][key])
+                        with a.div(klass='column'):
+                            a.h2(_t='Base resources')
+                            generate_resources(a, production_plan['base_resources'])
+                    a.button(type='button', klass='expndall', _t='Expand/Collapse all')
                 elif 'tier' in tier:
                     generate_tier(a, i, production_plan[tier])
-                else:
-                    generate_resources(a, production_plan[tier])
         with a.script():
             a(script)
     
@@ -382,6 +391,42 @@ def generate_html(production_plan: dict, path: str):
     with open(path, 'wb') as f:
         f.write(html)
 
+def example_run():
+    exact, inexact = search_object('uranium fuel rod', 'items')
+    print('Exact: ', exact)
+    if exact:
+        item = exact[0][1]
+    else:
+        print('No corresponding item found. Exiting')
+        quit()
+    children, recipes = get_child_items(item)
+    print('Child items: ', children)
+    print('Child recipes: ', recipes)
+    
+    qty = 10
+    production_plan = get_production_plan(item, qty, recipes)
+    print('\t--- PRODUCTION PLAN ---')
+    pretty_dict_print(production_plan)
+    
+    path = 'output\\test.html'
+    generate_html(production_plan, path)
+    
+    webbrowser.open(path)
+
+def main():
+    #select item
+
+    #select recipe for item
+
+    #while smth
+    #generate prodplan
+    #use alternate ? #select tier #select recipe to change
+
+    #generate html (choose name depending on recipe and time)
+
+    #open html
+
+    pass
 ### Script code ###
 try:
     #Load data
@@ -408,7 +453,7 @@ data_itemtodefaultrecipes = build_item_to_recipes(alternates=False)
 data_baseresources = build_baseresources()
 
 # Prevent infinite looping
-MAX_ITER = 1000
+MAX_ITER = 100
 
 # Web shit
 style = """body {
@@ -427,8 +472,32 @@ table {
 td, th {
 	padding: 1px 5px;
 	font-size: 16px;
-	font-family: "Segoe UI", sans-serif;
 	color: white;
+	font-family: "Segoe UI", sans-serif;
+}
+
+.column {
+  float: left;
+  padding: 5px 40px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.expndall {
+	background-color: #555;
+	color: white;
+	cursor: pointer;
+	padding: 5px 10px;
+	border: none;
+	text-align: left;
+	outline: none;
+	font-size: 16px;
+	font-family: "Segoe UI", sans-serif;
 }
 
 .collapsible {
@@ -444,9 +513,10 @@ td, th {
 	font-family: "Segoe UI", sans-serif;
 }
 
-.collapsible:hover {
+.collapsible:hover, .expndall:hover {
 	background-color: #FA9649;
 }
+
 .active {
 	background-color: #777;
 }
@@ -464,26 +534,43 @@ td, th {
 	color: #FA9649
 }"""
 
-script = """var coll = document.getElementsByClassName("collapsible");
+script = """var expnd = document.getElementsByClassName("expndall")[0];
+var coll = document.getElementsByClassName("collapsible");
 var i;
 
 for (i = 0; i < coll.length; i++) {
-	coll[i].addEventListener("click", function() {
-		this.classList.toggle("active");
-		var content = this.nextElementSibling;
-		if (content.style.display === "block") {
-			content.style.display = "none";
-		} else {
-		content.style.display = "block";
-		}
-	});
-}"""
+    coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+            content.style.display = "none";
+        } else {
+        content.style.display = "block";
+        }
+    });
+}
+
+expnd.addEventListener("click", function() {
+    var state = false;
+    var style = "block";
+    for (i = 0; i < coll.length; i++) {
+        state = state || (coll[i].nextElementSibling.style.display==="block");
+    }
+
+    if (state) {
+        style = "none";
+    }
+
+    for (i = 0; i < coll.length; i++) {
+        coll[i].nextElementSibling.style.display=style;
+    coll[i].classList.toggle("active", !state)
+    }
+});"""
 
 ### Main code ###
 if __name__=='__main__':
-    #investigate why fuel does not work
-    
-    exact, inexact = search_object('uranium fuel rod', 'items')
+    print('\t--- SATISBRAIN ---')
+    exact, inexact = search_object('fuel', 'items')
     print('Exact: ', exact)
     if exact:
         item = exact[0][1]
