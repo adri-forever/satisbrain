@@ -6,13 +6,6 @@ for future: take into account if water is produced somewhere as a byproduct, sub
 """
 
 ### Functions ###
-def round_float(a: float, precision: int = 3):
-    """
-    Round float to desired precision
-    Precision is an int representing number of desired significant numerals
-    """
-    return float(f'%.{precision}f'%a)
-
 def pretty_dict_print(dict_: dict, deep: bool = True, level: int = 0):
     indent = level*'\t'
     for key, value in dict_.items():
@@ -360,6 +353,49 @@ def get_production_plan(item: str, qty: float, recipes: list[str]):
     
     return production_plan
 
+def build_production_tier(tier: int, production_plan: dict, itempool: dict[float], base_resources: list[str], recipes: dict[str]):
+    tiername = f'tier{tier}'
+    production_plan[tiername] = {}
+
+    for item, qty in itempool.items():
+        if item in data_baseresources:
+            if 'base_resources' not in production_plan:
+                production_plan['base_resources'] = {}
+            
+            production_plan['base_resources']['item'] = qty
+        elif qty > 0:
+            recipe = recipes[item] if item in recipes else None
+            if not recipe:
+                pass
+                #try finding default recipe
+            recipe_data = data_recipes[recipe]
+
+            # Select rate of the right product, in case there are several
+            item_qty = [product['amount'] for product in recipe_data['products'] if product['item']==item][0]
+
+            # Calculate the needed amount of machines to satisfy the needed quantity of items (/min)
+            machine_qty = qty * recipe_data['time'] / (60 * item_qty)
+            
+            # Alter itempool (products are substracted from, ingredients are added to the pool)
+            production_plan[tiername][recipe] = machine_qty
+            for product in recipe_data['products']:
+                product_item = product['item']
+                product_qty = 60 * machine_qty * product['amount'] / recipe_data['time']
+                
+                if product_item not in itempool:
+                    itempool[product_item] = 0
+                itempool[product_item] -= product_qty
+
+            for ingredient in recipe_data['ingredients']:
+                ingr_item = ingredient['item']
+                ingr_qty = 60 * machine_qty * ingredient['amount'] / recipe_data['time']
+                
+                if ingr_item not in itempool:
+                    itempool[ingr_item] = 0
+                itempool[ingr_item] += ingr_qty
+
+    return production_plan, itempool
+
 def get_production_plan_new(target_recipe: str, qty: float, allowed_recipes: list[str]):
     # Contains steps
     production_plan = {}
@@ -485,8 +521,8 @@ def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
                 prd_name = data_items[product['item']]['name']
                 rate = 60 * product['amount'] / recipe_data['time']
                 
-                qrate = round_float(qty * rate)
-                rate = round_float(rate)
+                qrate = round(qty * rate, DIGITS)
+                rate = round(rate, DIGITS)
                 
                 a.td(_t=prd_name)
                 a.td(_t='{:g}'.format(rate))
@@ -502,8 +538,8 @@ def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
                 ingr_name = data_items[ingredient['item']]['name']
                 rate = 60 * ingredient['amount'] / recipe_data['time']
                 
-                qrate = round_float(qty * rate)
-                rate = round_float(rate)
+                qrate = round(qty * rate, DIGITS)
+                rate = round(rate, DIGITS)
                 
                 a.td(_t=ingr_name)
                 a.td(_t='{:g}'.format(rate))
@@ -523,7 +559,7 @@ def generate_resources(a: airium.Airium, resources: dict):
     #Clean low numbers
     topop = []
     for resource, qty in resources.items():
-        resources[resource] = round_float(qty)
+        resources[resource] = round(qty, DIGITS)
         if not resources[resource]:
             topop.append(resource)
     for resource in topop:
@@ -734,6 +770,7 @@ data_baseresources = build_baseresources()
 
 # Prevent infinite looping
 MAX_ITER = 100
+DIGITS = 3
 
 # Web shit
 style = """body {

@@ -1,6 +1,7 @@
-import ttkthemes, tktooltip
+import tktooltip
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
+from typing import Literal
 
 import brain
 
@@ -134,6 +135,9 @@ class ComputingFrame(tk.Canvas):
     """
     """
     
+    item: str = ''
+    base_resources: list = brain.data_baseresources
+
     def __init__(self, master: ttk.Notebook):
         super().__init__(master, highlightthickness=0)
         
@@ -147,30 +151,90 @@ class ComputingFrame(tk.Canvas):
         
         self.create_window((0,0), window=self.innerframe, anchor='nw')
         
-        # for i in range(20):
-        #     ttk.Button(self.innerframe, text=f'button {i}').pack(pady=5)
         self.box_0 = ItemContainer(self)
         self.box_0.pack(padx=10, pady=10, anchor='nw')
 
     def scroller(self, event: tk.Event = None):
         if str(self) == self.master.select():
             self.configure(scrollregion=self.bbox('all'))
-        
-class ItemContainer(ttk.Frame):
     
+    def submit_item(self, item: str):
+        confirm = True
+        if self.item:
+            confirm = messagebox.askokcancel('Base item change', 'This action will reset the plan. All choices will be lost. Continue ?')
+        
+        if not confirm:
+            return
+        else:
+            self.item = item
+            print(item)
+            ...
+    
+    def manage_base_resources(self, item: str, action: Literal['add', 'remove'] = 'add'):
+        """
+        Allow to change what items are considered base resources or not in current production plan
+        """
+        if action=='add' and item not in self.base_resources:
+            self.base_resources.append(item)
+        elif action=='remove' and item in self.base_resources:
+            self.base_resources.remove(item)
+        elif action not in ['add', 'remove']:
+            print(f'Could not interpret action "{action}". Instruction ignored')
+
+class ItemContainer(ttk.Frame):
+
+    master: ComputingFrame
+
     def __init__(self, master):
         super().__init__(master)
+
+        self.itemdict = {item_data['name']: item for item, item_data in brain.data_items.items() if item not in self.master.base_resources}
+        self.itemlist = list(self.itemdict.keys())
+
+        ipads = {'ipadx': 0, 'ipady': 0}
+        pads = {'padx': 10, 'pady': 10}
+            
+        self.label = ttk.Label(self, text='Select item:')
+        self.label.pack(side='left', **pads)
+
+        self.itemvar = tk.StringVar(self, value='')
+        self.item_box = AutocompleteCombobox(self, textvariable=self.itemvar)
+        self.item_box.set_completion_list(self.itemlist)
+        self.item_box.pack(side='left', **pads)
+
+        self.submit_btn = ttk.Button(self, text='OK', command=self.submit_item)
+        self.submit_btn.pack(side='left', **pads)
+    
+    def submit_item(self):
+        selected = self.itemvar.get()
         
+        if selected not in self.itemdict:
+            messagebox.showerror('Item name not found', 'Please select an item in the list')
+        else:
+            item = self.itemdict[selected]
+            self.master.submit_item(item)
+
+
+
+class RecipeContainer(ttk.Frame):
+    
+    def __init__(self, master, item: str):
+        super().__init__(master)
+
+        self.recipedict = {brain.data_recipes[recipe]['name']: recipe for recipe in brain.data_itemtorecipes[item].values()}
+        self.recipelist = list(self.recipedict.keys())
+
         ipads = {'ipadx': 0, 'ipady': 0}
         pads = {'padx': 10, 'pady': 10}
         
         #Header
         self.header = tk.Frame(self, background='dark gray')
         self.header.pack(fill='x', **ipads)
-        
-        self.itemvar = tk.StringVar(self, value='Title long enough that i wish to unalive')
-        self.title = ttk.Entry(self.header, textvariable=self.itemvar, state='readonly')
-        self.title.pack(**pads)
+
+        self.recipevar = tk.StringVar(self, value=self.recipelist[0])
+        self.recipe_box = AutocompleteCombobox(self.header, textvariable=self.recipevarvar)
+        self.recipe_box.set_completion_list(self.recipelist)
+        self.recipe_box.pack(**pads)
         
         self.body = tk.Frame(self, background='black')
         self.body.pack(fill='both', **ipads)
