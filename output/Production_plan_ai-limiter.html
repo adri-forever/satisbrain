@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta content="width=device-width, initial-scale=1" name="viewport" charset="utf-8" />
+    <title>Satisbrain: AI Limiter</title>
+    <style>
+      body {
+	background-color: #333;
+	color: white;
+	font-family: "Segoe UI", sans-serif;
+}
+
+h2, h3 {
+    margin-bottom: 5px;
+}
+
+table, th {
+    border: 1px dashed #555;
+}
+
+td, th {
+	padding: 2px 8px;
+	font-size: 16px;
+}
+
+.tiercontainer {
+    display: flex;
+    flex-wrap: wrap; /* Allows the boxes to wrap onto the next line */
+    gap: 20px; /* Optional: Adds space between the boxes */
+    padding: 0 0 20px;
+}
+
+.tierbox {
+    flex: auto; /* Prevents the boxes from growing or shrinking */
+    justify-content: center;
+}
+
+.tablecont {
+    padding: 10px 10px;
+}
+
+.column {
+  float: left;
+  padding: 5px 40px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.expndall {
+	background-color: #555;
+	cursor: pointer;
+    color: white;
+	padding: 5px 10px;
+	border: none;
+	text-align: left;
+	outline: none;
+	font-size: 16px;
+	font-family: "Segoe UI", sans-serif;
+}
+
+.collapsible {
+	background-color: #555;
+	color: white;
+	cursor: pointer;
+	padding: 10px;
+	width: 100%;
+	border: none;
+	text-align: left;
+	outline: none;
+	font-size: 16px;
+	font-family: "Segoe UI", sans-serif;
+}
+
+.collapsible:hover, .expndall:hover {
+	background-color: #FA9649;
+}
+
+.active {
+	background-color: #777;
+}
+
+.content {
+	padding: 0 18px;
+	display: none;
+	overflow: hidden;
+	background-color: #333;
+}
+
+.high {
+	color: #FA9649
+}
+    </style>
+  </head>
+  <body>
+    <h1>Production plan: 10 AI Limiter per min</h1>
+    <div class="row">
+      <div class="column">
+        <h2>Recipe: AI Limiter </h2>
+        <table>
+          <tr>
+            <td></td>
+            <th>Rate (/min)</th>
+            <th>Total (/min)</th>
+            <th></th>
+            <th>Produced in</th>
+            <th>Amount</th>
+          </tr>
+          <tr>
+            <th>Products</th>
+          </tr>
+          <tr>
+            <td>AI Limiter</td>
+            <td>5</td>
+            <td class="high">10</td>
+            <td></td>
+            <td>Assembler</td>
+            <td>2</td>
+          </tr>
+          <tr>
+            <th>Ingredients</th>
+          </tr>
+          <tr>
+            <td>Copper Sheet</td>
+            <td>25</td>
+            <td class="high">50</td>
+          </tr>
+          <tr>
+            <td>Quickwire</td>
+            <td>100</td>
+            <td class="high">200</td>
+          </tr>
+        </table>
+      </div>
+      <div class="column">
+        <h2>Input</h2>
+        <table>
+          <tr>
+            <th>Resource</th>
+            <th>Total (/min)</th>
+          </tr>
+          <tr>
+            <td>Caterium Ingot</td>
+            <td>80</td>
+          </tr>
+          <tr>
+            <td>Copper Ore</td>
+            <td>40</td>
+          </tr>
+          <tr>
+            <td>Water</td>
+            <td>26.667</td>
+          </tr>
+        </table>
+      </div>
+      <div class="column">
+        <h2>Extra resources</h2>
+        <h3 class="high">No leftover !</h3>
+      </div>
+      <div class="column">
+        <h2>Power consumption</h2>
+        <p>WIP</p>
+        <p>Resource extraction ignored</p>
+      </div>
+    </div>
+    <button type="button" class="expndall">Expand/Collapse all</button>
+    <button type="button" class="collapsible">Stage 1</button>
+    <div class="content">
+      <div class="tiercontainer">
+        <div class="tierbox">
+          <h3>Copper Sheet </h3>
+          <table>
+            <tr>
+              <td></td>
+              <th>Rate (/min)</th>
+              <th>Total (/min)</th>
+              <th></th>
+              <th>Produced in</th>
+              <th>Amount</th>
+            </tr>
+            <tr>
+              <th>Products</th>
+            </tr>
+            <tr>
+              <td>Copper Sheet</td>
+              <td>10</td>
+              <td class="high">50</td>
+              <td></td>
+              <td>Constructor</td>
+              <td>5</td>
+            </tr>
+            <tr>
+              <th>Ingredients</th>
+            </tr>
+            <tr>
+              <td>Copper Ingot</td>
+              <td>20</td>
+              <td class="high">100</td>
+            </tr>
+          </table>
+        </div>
+        <div class="tierbox">
+          <h3>Quickwire </h3>
+          <table>
+            <tr>
+              <td></td>
+              <th>Rate (/min)</th>
+              <th>Total (/min)</th>
+              <th></th>
+              <th>Produced in</th>
+              <th>Amount</th>
+            </tr>
+            <tr>
+              <th>Products</th>
+            </tr>
+            <tr>
+              <td>Quickwire</td>
+              <td>60</td>
+              <td class="high">200</td>
+              <td></td>
+              <td>Constructor</td>
+              <td>3.33333</td>
+            </tr>
+            <tr>
+              <th>Ingredients</th>
+            </tr>
+            <tr>
+              <td>Caterium Ingot</td>
+              <td>12</td>
+              <td class="high">40</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <button type="button" class="collapsible">Stage 2</button>
+    <div class="content">
+      <div class="tiercontainer">
+        <div class="tierbox">
+          <h3>Alternate: Pure Copper Ingot (alternate)</h3>
+          <table>
+            <tr>
+              <td></td>
+              <th>Rate (/min)</th>
+              <th>Total (/min)</th>
+              <th></th>
+              <th>Produced in</th>
+              <th>Amount</th>
+            </tr>
+            <tr>
+              <th>Products</th>
+            </tr>
+            <tr>
+              <td>Copper Ingot</td>
+              <td>37.5</td>
+              <td class="high">100</td>
+              <td></td>
+              <td>Refinery</td>
+              <td>2.66667</td>
+            </tr>
+            <tr>
+              <th>Ingredients</th>
+            </tr>
+            <tr>
+              <td>Copper Ore</td>
+              <td>15</td>
+              <td class="high">40</td>
+            </tr>
+            <tr>
+              <td>Water</td>
+              <td>10</td>
+              <td class="high">26.667</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+    var expnd = document.getElementsByClassName("expndall")[0];
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+    coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+            content.style.display = "none";
+        } else {
+        content.style.display = "block";
+        }
+    });
+}
+
+expnd.addEventListener("click", function() {
+    var state = false;
+    var style = "block";
+    for (i = 0; i < coll.length; i++) {
+        state = state || (coll[i].nextElementSibling.style.display==="block");
+    }
+
+    if (state) {
+        style = "none";
+    }
+
+    for (i = 0; i < coll.length; i++) {
+        coll[i].nextElementSibling.style.display=style;
+    coll[i].classList.toggle("active", !state)
+    }
+});
+  </script>
+</html>
