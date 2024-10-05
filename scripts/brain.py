@@ -1,5 +1,6 @@
 import json, copy, timeit, airium, webbrowser
 from typing import Literal
+import numpy as np
 
 """
 the ultimate test for this tool will be:
@@ -12,6 +13,11 @@ successfuly produce a plan for fuel using diluted packaged fuel
 
 inputs you should give:
     alternates: packaged diluted fuel, heavy oil residue
+    
+    
+    
+Trucs a fixer: dans les recettes 'principales' n'utiliser que les recettes dont l'item est le premier output:
+NE PAS ESSAYER DE FABRIQUER DE LACIDE SULFURIQUE AVEC DES URANIUM CELL ????? Ca se fait avec du SULFUR et de LEAU merde
 """
 
 ### Functions ###
@@ -57,7 +63,21 @@ def build_baseresources() -> set[str]:
     For 1.0: manually make the list for ores. they can now be transmuted.
     iron, copper, limestone, coal, crystal, caterium, bauxite, uranium, sulfur, SAM(not necessary?), water, oil, nitrogen
     """
-    data_baseresources = {item for item, recipes in data_itemtodefaultrecipes.items() if not recipes}
+    data_baseresources = {item
+                          for item, recipes in data_itemtodefaultrecipes.items()
+                          if (not recipes)}
+    
+    data_baseresources.add('Desc_OreIron_C')
+    data_baseresources.add('Desc_OreBauxite_C')
+    data_baseresources.add('Desc_OreGold_C')
+    data_baseresources.add('Desc_OreCopper_C')
+    data_baseresources.add('Desc_OreUranium_C')
+    data_baseresources.add('Desc_Stone_C')
+    data_baseresources.add('Desc_Coal_C')
+    data_baseresources.add('Desc_Sulfur_C')
+    data_baseresources.add('Desc_QuartzCrystal_C')
+    data_baseresources.add('Desc_SAM_C')
+    
     data_baseresources.add('Desc_Water_C')
     data_baseresources.add('Desc_LiquidOil_C')
     data_baseresources.add('Desc_NitrogenGas_C')
@@ -465,12 +485,32 @@ def select_recipe(item: str):
     recipe = ''
     recipes = data_itemtorecipes[item]
     
-    default_recipes = [rec for rec in recipes if not data_recipes[rec]['alternate']]
+    rec_score = [0]*len(recipes)
     
-    if len(default_recipes)>=1:
-        recipe = default_recipes[0]
-    elif len(recipes)>=1:
-        recipe = recipes[0]
+    """
+    How should we choose recipes
+    1- Default recipe, and main product // 3
+    2- Default recipe, byproduct // 2
+    3- Alternate recipe, main product // 1
+    4- Alternate recipe, byproduct // 0
+    5- (Un)Packaging // -1
+    """
+    
+    for i in range(len(recipes)):
+        rec = recipes[i]
+        score = 0
+        if item==data_recipes[rec]['products'][0]['item']: # if main product
+            score += 1
+        if not data_recipes[rec]['alternate']: # if default recipe
+            score += 2
+        if data_recipes[rec]['producedIn'][0]=='Desc_Packager_C': # if packaging/unpackaging
+            score = -1
+        
+        rec_score[i] = score
+    
+    if recipes:
+        idmax= np.array(rec_score).argmax()
+        recipe = recipes[idmax]
     else:
         print(f'No recipe found for item {data_items[item]['name']}')
     return recipe
@@ -490,6 +530,16 @@ def get_production_plan(target_item: str, qty: float, recipes: dict[str: str], b
         previoustier = tiername
         
         itempool: dict[str: float] = copy.deepcopy(production_plan[previoustier]['itempool'])
+        # next_itempool: dict[str: float] = copy.deepcopy(itempool) # questionable
+        # on certain occasions, not separating the pools this will compress a recipe to one tier higher than it shoulde be
+        # However, separating the pools may cause some error when a single recipe has a byproduct
+        
+        # how to handle the 1 tier up situation:
+        # if the item you are currently treating is child of other items in the tier,
+        # skip to compute on next tie
+        #
+        # do that during tier building or during plan refinement ?
+        # the advantage of doing that during tier building is that we have left_items to refer to 
         
         #List all items to produce in said tier
         left_items = [item_ for item_, qty_ in itempool.items() if qty_>10**(-DIGITS) and item_ not in base_resources]
@@ -498,7 +548,7 @@ def get_production_plan(target_item: str, qty: float, recipes: dict[str: str], b
             break # if no items are left to craft, exit loop (and dont make a next tier)
         
         tiername = f'tier{i}'
-        production_plan[tiername] = {'itempool': {}, 'recipepool': {}}
+        production_plan[tiername] = {'itempool': {}, 'recipepool': {}, 'itemtorec': {}}
         
         for item in left_items:
             if item in recipes:
@@ -509,8 +559,10 @@ def get_production_plan(target_item: str, qty: float, recipes: dict[str: str], b
             
             if not recipe:
                 base_resources.add(item)
-                print('No available recipe for this item. It has been added to base resources')
+                print(f'No available recipe for {data_items[item]['name']}. It has been added to base resources')
                 continue
+            
+            production_plan[tiername]['itemtorec'][item] = recipe
             
             recipe_data = data_recipes[recipe]
             
@@ -584,7 +636,9 @@ def get_production_plan(target_item: str, qty: float, recipes: dict[str: str], b
         if len(tiers_recipe)>1:
             for tier in tiers_recipe:
                 production_plan[tier]['recipepool'].pop(recipe)
+                production_plan[tier]['itemtorec'].pop(item)
             production_plan[tiers_recipe[-1]]['recipepool'][recipe] = recipetotal
+            production_plan[tiers_recipe[-1]]['itemtorec'][item] = recipe
         
         # Propagate item quantities
         itemtotal = 0
@@ -934,7 +988,7 @@ def main():
 ### Script code ###
 try:
     #Load data
-    with open('resource\\data.json') as f:
+    with open('resource\\data.json', encoding='utf-8') as f:
         data = json.load(f)
 except FileNotFoundError:
     print('Could not find data file. Program will not work')
@@ -957,7 +1011,7 @@ data_itemtodefaultrecipes = build_item_to_recipes(alternates=False)
 data_baseresources = build_baseresources()
 
 # Prevent infinite looping
-MAX_ITER = 100
+MAX_ITER = 10
 # Number of digits floats are rounded to
 DIGITS = 3
 

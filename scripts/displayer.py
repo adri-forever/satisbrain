@@ -1,4 +1,4 @@
-import tktooltip, re, platform, webbrowser
+import tktooltip, re, platform, webbrowser, copy
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from typing import Literal
@@ -224,7 +224,7 @@ class ComputingFrame(ttk.Frame):
     target_item: str = ''
     qty: float = 0
     recipes: dict[str: str] = {}
-    base_resources: set[str] = brain.data_baseresources
+    base_resources: set[str] = copy.deepcopy(brain.data_baseresources)
     production_plan: dict = {}
     
     pads = {'padx': 5, 'pady': 5}
@@ -242,7 +242,7 @@ class ComputingFrame(ttk.Frame):
         self.resource_manager.pack(side='left', anchor='nw', **self.pads)
         
         self.genrep_btn = ttk.Button(self.header, text='Generate report', command=self.generate_report)
-        self.genrep_btn.pack(side='left', **self.pads)
+        self.genrep_btn.pack(side='right', **self.pads)
         
         self.plan_frame = ScrollFrame(self)
         self.plan_frame.pack(fill='both', expand=True)
@@ -294,16 +294,34 @@ class ComputingFrame(ttk.Frame):
         pplan = self.production_plan
         
         for tier in pplan.values():
-            if 'itempool' in tier:
-                left_items = [item_ for item_, qty_ in tier['itempool'].items()
-                              if item_ not in self.base_resources
-                              and qty_ > 10**(-brain.DIGITS)]
+            if 'itemtorec' in tier:
+                # left_items = [item_ for item_, qty_ in tier['itempool'].items()
+                #               if item_ not in self.base_resources
+                #               and qty_ > 10**(-brain.DIGITS)]
+                # #make a box to choose recipe if
+                # #item is not a base resource
+                # #desired quantity of item is positive (= needs to be crafted)
+                
+                # if 'recipepool' in tier:
+                #     temp_items = [item_ for item_ in left_items
+                #                   if ( set(brain.data_itemtorecipes[item_]) & set(tier['recipepool'].keys()) )]
+                #     left_items = temp_items
+                # additionnal condition if tier contains recipepool:
+                #only add box if item supposedly crafted in this tier (= there is a recipe in this tier that produces this item)
+                # (= the intersection of recipes that give this item and recipes in this tier is not empty set)
+                
+                separator = ttk.Separator(self.plan_frame.innerframe)
+                separator.pack(fill='x')
+                
+                left_items = tier['itemtorec'].keys()
                 
                 if left_items:
-                    line = ttk.Frame(self.plan_frame.innerframe)
-                    line.pack(fill='x')
-                    
-                    for item in left_items:
+                    for i, item in enumerate(left_items):
+                        # Every 6 recipe, create a new line
+                        if i%6==0:
+                            line = ttk.Frame(self.plan_frame.innerframe)
+                            line.pack(fill='x')
+                        
                         recipebox = RecipePicker(line, self, item)
                         recipebox.pack(side='left', anchor='n', **self.pads)
 
