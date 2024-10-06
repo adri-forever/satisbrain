@@ -1,5 +1,5 @@
 import tkinter as tk
-import os, sys
+import os, sys, shutil
 from tkinter import ttk
 
 # Get the path of the current directory (main_directory)
@@ -77,6 +77,8 @@ class Window(tk.Tk):
         super().__init__()
         
         self.title('Image renamer')
+        icon = tk.PhotoImage(file='resource\\image\\satisbrain.png')
+        self.wm_iconphoto(False, icon)
         
         # Load data
         self.itemdict = {value['name']: key for key, value in brain.data_items.items()}
@@ -112,7 +114,7 @@ class Window(tk.Tk):
         self.autocomplete.pack(side='left', **pads)
         self.autocomplete.set_completion_list(self.itemdict.keys())
         
-        self.ok_btn = tk.Button(self.controls, text='Ok')
+        self.ok_btn = tk.Button(self.controls, text='Ok', command=self.rename_image)
         self.ok_btn.pack(side='left', **pads)
         
         self.next_btn = tk.Button(self.controls, text='Next', command=self.change_image)
@@ -134,7 +136,24 @@ class Window(tk.Tk):
         # print(self.index, self.images[self.index])
 
     def rename_image(self):
-        pass
+        name = ''
+        selected = self.autocomplete.get()
+        
+        if selected in self.itemdict:
+                name = self.itemdict[selected]
+        else:
+                print(f'Error in selection, could not handle "{selected}"')
+                return
+        
+        source = os.path.join(self.oldpath, self.images[self.index])
+        destination = os.path.join(self.newpath, name+'.png')
+        
+        shutil.copy(source, destination)
+
+        del self.images[0]
+        self.NoOfIm = len(self.images)
+        
+        self.change_image(0) # reload to change image
 
 window = Window()
 window.mainloop()

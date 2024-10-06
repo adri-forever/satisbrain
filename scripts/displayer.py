@@ -70,8 +70,8 @@ class ScrollFrame(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent) # create a frame (self)
 
-        self.canvas = tk.Canvas(self, borderwidth=0, background="#ffffff")          #place canvas on self
-        self.innerframe = tk.Frame(self.canvas, background="#ffffff")                    #place a frame on the canvas, this frame will hold the child widgets 
+        self.canvas = tk.Canvas(self, borderwidth=0, background="#333")          #place canvas on self
+        self.innerframe = tk.Frame(self.canvas, background="#333")                    #place a frame on the canvas, this frame will hold the child widgets 
         self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview) #place a scrollbar on self 
         self.canvas.configure(yscrollcommand=self.vsb.set)                          #attach scrollbar action to scroll of canvas
 
@@ -155,11 +155,14 @@ class Window(tk.Tk):
     def __init__(self):
         super().__init__()
         
-        self.title('Satisbrain ALPHA')
+        self.title('Satisbrain')
         #set icon
         self.geometry('720x480')
         
-        # self.setup_style()
+        icon = tk.PhotoImage(file='resource\\image\\satisbrain.png')
+        self.wm_iconphoto(False, icon)
+        
+        self.setup_style()
         
         self.topbuttonbar = TopButtonBar(self)
         self.topbuttonbar.pack(fill='x')
@@ -198,11 +201,22 @@ class Window(tk.Tk):
         """
         self.style = ttk.Style(self)
         
+        font = "Segoe UI"
+        fontsize = 11
+        
         print(self.style.theme_names())
         self.style.theme_use('clam')
         
-        self.style.configure('TButton', relief='flat', foreground='white', background='black', activebackground='orange',
-                             highlightbackground = 'dark gray')
+        self.style.configure('TNotebook', relief='flat', background='#333', foreground='white')
+        
+        self.style.configure('TFrame', relief='flat', background='#333')
+        self.style.configure('light.TFrame', relief='flat', background='#555')
+        
+        self.style.configure('TLabel', relief='flat', background='#333', foreground='white', font=(font, fontsize))
+        self.style.configure('high.TLabel', relief='flat', background='#555', foreground='white', font=(font, fontsize+2, 'bold'))
+        
+        self.style.configure('TButton', relief='flat', foreground='white', background='#555', activebackground='#FA9649',
+                             highlightbackground = '#FA9649')
         
 class TopButtonBar(ttk.Frame):
     
@@ -343,7 +357,7 @@ class ItemPicker(ttk.Frame):
     computingframe: ComputingFrame
 
     def __init__(self, master, computingframe: ComputingFrame):
-        super().__init__(master)
+        super().__init__(master, relief='solid')
         
         self.computingframe = computingframe
 
@@ -454,7 +468,7 @@ class RecipePicker(ttk.Frame):
     computingframe: ComputingFrame
     
     def __init__(self, master, computingframe, item: str):
-        super().__init__(master, relief='groove')
+        super().__init__(master, relief='solid')
         self.computingframe = computingframe
         self.item = item
 
@@ -466,10 +480,10 @@ class RecipePicker(ttk.Frame):
         pads = {'padx': 10, 'pady': 10}
         
         #Header
-        self.header = tk.Frame(self, background='dark gray')
+        self.header = ttk.Frame(self, style='light.TFrame')
         self.header.pack(fill='x', **ipads)
 
-        self.item_box = ttk.Label(self.header, text=brain.data_items[item]['name'])
+        self.item_box = ttk.Label(self.header, text=brain.data_items[item]['name'], style='high.TLabel')
         self.item_box.pack(side='left', **pads)
         
         if item in self.computingframe.recipes:
@@ -482,7 +496,7 @@ class RecipePicker(ttk.Frame):
         self.recipe_box.pack(side='left', **pads)
         self.recipe_box.bind('<<ComboboxSelected>>', self.change_recipe)
         
-        body = tk.Frame(self, background='black')
+        body = ttk.Frame(self)
         body.pack(fill='both', **ipads)
         
         recipe_data = brain.data_recipes[default]

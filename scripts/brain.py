@@ -1,4 +1,4 @@
-import json, copy, timeit, airium, webbrowser
+import json, copy, timeit, airium, webbrowser, math
 from typing import Literal
 import numpy as np
 
@@ -32,8 +32,6 @@ def pretty_dict_print(dict_: dict, deep: bool = True, level: int = 0):
     
 def build_item_to_recipes(alternates: bool = True) -> dict:
     """
-    To change: DONT TAKE PACKAGER/UNPACKAGER
-    or make oil baseresource ?
     """
     data_itemtorecipes = {}
     
@@ -45,9 +43,9 @@ def build_item_to_recipes(alternates: bool = True) -> dict:
             for product in products:
                 # Append recipe if:
                 # recipe produces selected item
-                # and
-                # recipe is default, unless we asked for
-                if product['item']==item_k and (not recipe_v['alternate'] or alternates):
+                # and recipe comes from a machine
+                # and recipe is default, unless we asked for
+                if product['item']==item_k and (not recipe_v['alternate'] or alternates) and recipe_v['inMachine']:
                     data_itemtorecipes[item_k].append(recipe_k)
     
     return data_itemtorecipes
@@ -75,7 +73,7 @@ def build_baseresources() -> set[str]:
     data_baseresources.add('Desc_Stone_C')
     data_baseresources.add('Desc_Coal_C')
     data_baseresources.add('Desc_Sulfur_C')
-    data_baseresources.add('Desc_QuartzCrystal_C')
+    data_baseresources.add('Desc_RawQuartz_C')
     data_baseresources.add('Desc_SAM_C')
     
     data_baseresources.add('Desc_Water_C')
@@ -243,9 +241,6 @@ def search_object(name: str, datatype: Literal['recipes', 'items', 'schematics',
     
     return results_ex, results_inex
 
-def general_lookup(slug: str):
-    pass
-
 def get_recipe_ingredients(recipe: str) -> dict:
     return data_recipes[recipe]['ingredients']
 
@@ -306,93 +301,6 @@ def get_child_items(item: str, alternates: list[str] = [], deep: bool = True, pa
     children |= subchildren
     
     return children, parent_recipes
-
-def get_production_plan_old(item: str, qty: float, recipes: list[str]):
-    # Contains steps
-    production_plan = {}
-    
-    recipe = [rec for rec in recipes if rec in data_itemtorecipes[item]][0]
-    item_to_recipe = {item: recipe}
-    recipe_data = data_recipes[recipe]
-    if qty <= 0:
-        print('Cannot produce negative amount of items. Creating plan for singular machine')
-        qty = 60 * recipe_data['products'][0]['amount'] / recipe_data['time'] # /min
-    
-    # For calculation
-    itempool = {item: qty}
-    
-    for i in range(MAX_ITER): #change to while once we got the condition
-        #Make room for current tier
-        tiername = f'tier{i}'
-        production_plan[tiername] = {}
-        
-        #List all items to produce in said tier
-        left_items = [item for item, iqty in itempool.items() if iqty>0 and item not in data_baseresources]
-        if not left_items:
-            break # if no items are left to craft, exit loop
-        
-        for item in left_items:
-            recipe = [rec for rec in data_itemtorecipes[item] if rec in recipes][0]
-            recipe_data = data_recipes[recipe]
-            
-            # decide number of machines for recipe: divide asked quantity by recipe rate (/min)
-            machine_qty = itempool[item] / (60 * recipe_data['products'][0]['amount'] / recipe_data['time'])
-            
-            production_plan[tiername][recipe] = machine_qty
-            for product in recipe_data['products']:
-                product_item = product['item']
-                product_qty = 60 * machine_qty * product['amount'] / recipe_data['time']
-                
-                if product_item not in itempool:
-                    itempool[product_item] = 0
-                itempool[product_item] -= product_qty
-
-            for ingredient in recipe_data['ingredients']:
-                ingr_item = ingredient['item']
-                ingr_qty = 60 * machine_qty * ingredient['amount'] / recipe_data['time']
-                
-                if ingr_item not in itempool:
-                    itempool[ingr_item] = 0
-                itempool[ingr_item] += ingr_qty
-
-        if i==MAX_ITER-1:
-            raise LookupError(f'Max recipe iterations reached. Looping may have occured. Production plan: {production_plan}')
-        
-        # print('Item pool:')
-        # print(itempool)
-        # print('Production plan:')
-        # print(production_plan[tiername])
-    
-    # Refine plan
-    #Downwards: concatenate recipes that appear several time to lowest tier
-    for recipe in recipes:
-        lowest_tier = ''
-        tiers = []
-        total = 0
-        for tier, plan in production_plan.items():
-            if recipe in plan:
-                lowest_tier = tier
-                tiers.append(tier)
-                total = plan[recipe]
-        
-        for tier in tiers:
-            production_plan[tier].pop(recipe)
-        production_plan[lowest_tier][recipe] = total
-    
-    #Final cleanup: remove empty tiers
-    topop = []
-    for tier, plan in production_plan.items():
-        if not plan:
-            topop.append(tier)
-    for tier in topop:
-        production_plan.pop(tier)
-    
-    base_resources = {item: value for item, value in itempool.items() if value>0}
-    production_plan['base_resources'] = base_resources
-    extra_resources = {item: -value for item, value in itempool.items() if value<0}
-    production_plan['extra_resources'] = extra_resources
-    
-    return production_plan
 
 def build_production_tier(tier: int, production_plan: dict, base_resources: list[str], recipes: dict[str: str]):
     """
@@ -654,6 +562,8 @@ def get_production_plan(target_item: str, qty: float, recipes: dict[str: str], b
 
 def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
     
+    qty = round(qty, DIGITS)
+    
     products = recipe_data['products']
     ingredients = recipe_data['ingredients']
     
@@ -664,7 +574,6 @@ def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
             a.td(_t='')
             a.th(_t='Rate (/min)')
             a.th(_t='Total (/min)')
-            a.th(_t='')
             a.th(_t='Produced in')
             a.th(_t='Amount')
         with a.tr():
@@ -681,7 +590,6 @@ def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
                 a.td(_t='{:g}'.format(rate))
                 a.td(_t='{:g}'.format(qrate), klass='high')
                 if i==0:
-                    a.td(_t='')
                     a.td(_t=machine)
                     a.td(_t='{:g}'.format(qty))
         with a.tr():
@@ -697,16 +605,6 @@ def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
                 a.td(_t=ingr_name)
                 a.td(_t='{:g}'.format(rate))
                 a.td(_t='{:g}'.format(qrate), klass='high') 
-
-def generate_tier_old(a: airium.Airium, tierno: int, tier: dict):
-    a.button(type='button', klass='collapsible', _t=f'Stage {tierno}')
-    with a.div(klass='content'):
-        for recipe in tier:
-            recipe_data = data_recipes[recipe]
-            with a.button(type='button', klass='collapsible'):
-                a(recipe_data['name'])
-            with a.div(klass='content'):
-                generate_recipe(a, recipe_data, tier[recipe])
 
 def get_recipe_title(recipe_data: dict) -> str:
     return f'{recipe_data['name']} {'(alternate)' if recipe_data['alternate'] else ''}'
@@ -754,6 +652,7 @@ def generate_resources(a: airium.Airium, resources: dict, fltr: Literal['positiv
                 a.th(_t='Resource')
                 a.th(_t='Total (/min)')
             for resource, qty in pool.items():
+                qty = round(qty, DIGITS)
                 res_name = data_items[resource]['name']
                 with a.tr():
                     a.td(_t=res_name)
@@ -761,43 +660,39 @@ def generate_resources(a: airium.Airium, resources: dict, fltr: Literal['positiv
     else:
         a.h3(_t='No leftover !', klass='high')
 
-def generate_html_old(production_plan: dict, path: str):
-    a = airium.Airium()
+def generate_machines(a: airium.Airium, production_plan: dict):
+    machines = {}
+    for tier in production_plan.values():
+        if 'recipepool' in tier:
+            for recipe, qty in tier['recipepool'].items():
+                recipe_data = data_recipes[recipe]
+                machine = recipe_data['producedIn'][0]
+                if machine not in machines:
+                    machines[machine] = 0
+                machines[machine] += math.ceil(qty)
     
-    key = list(production_plan[list(production_plan.keys())[0]].keys())[0]
-    base_recipe = data_recipes[key]
-    recipe_name = base_recipe['name']
-    
-    a('<!DOCTYPE html>')
-    with a.html(lang='en'):
-        with a.head():
-            a.meta(content='width=device-width, initial-scale=1', name='viewport', charset='utf-8')
-            a.title(_t=f'Satisbrain: {recipe_name}')
-            with a.style():
-                a(style)
-        with a.body():
-            a.h1(_t=f'Production plan: {recipe_name}')
-            for i, tier in enumerate(production_plan):
-                if i==0:
-                    with a.div(klass='row'):
-                        with a.div(klass='column'):
-                            a.h2(_t='Recipe')
-                            generate_recipe(a, base_recipe, production_plan[tier][key])
-                        with a.div(klass='column'):
-                            a.h2(_t='Base resources')
-                            generate_resources(a, production_plan['base_resources'])
-                        with a.div(klass='column'):
-                            a.h2(_t='Extra resources')
-                            generate_resources(a, production_plan['extra_resources'])
-                    a.button(type='button', klass='expndall', _t='Expand/Collapse all')
-                elif 'tier' in tier:
-                    generate_tier(a, i, production_plan[tier])
-        with a.script():
-            a(script)
-    
-    html = str(a).encode('utf-8')
-    with open(path, 'wb') as f:
-        f.write(html)
+    totalpower = 0
+    if machines:
+        with a.table():
+            with a.tr():
+                a.th(_t='Machine')
+                a.th(_t='Quantity')
+                a.th(_t='Estimated power (MW)')
+            for machine, qty in machines.items():
+                machine_data = data_buildings[machine]
+                name = machine_data['name']
+                power = round(qty * machine_data['metadata']['powerConsumption'], DIGITS)
+                totalpower += power
+                qty = round(qty, DIGITS)
+                with a.tr():
+                    a.td(_t=name)
+                    a.td(_t='{:g}'.format(qty))
+                    a.td(_t='{:g}'.format(power))
+            with a.tr():
+                a.td(_t='Total')
+                a.td(_t='')
+                a.td(_t='{:g}'.format(totalpower))
+    a.p(_t='Resource extraction ignored. Variable power buildings not computed')
 
 def generate_html(production_plan: dict, path: str):
     """
@@ -831,13 +726,14 @@ def generate_html(production_plan: dict, path: str):
                 with a.div(klass='column'):
                     a.h2(_t='Input')
                     generate_resources(a, production_plan[tierlist[-1]]['itempool'], 'positive')
+            with a.div(klass='row'):
+                with a.div(klass='column'):
+                    a.h2(_t='Machines & power')
+                    generate_machines(a, production_plan)
                 with a.div(klass='column'):
                     a.h2(_t='Extra resources')
                     generate_resources(a, production_plan[tierlist[-1]]['itempool'], 'negative')
-                with a.div(klass='column'):
-                    a.h2(_t='Power consumption')
-                    a.p(_t='WIP')
-                    a.p(_t='Resource extraction ignored')
+            a.h2(_t='Production steps')
             a.button(type='button', klass='expndall', _t='Expand/Collapse all')
             for i in range(0, len(tierlist)-2):
                 # Offset by 2 because first tier only has target item and second only has target recipe
@@ -848,28 +744,6 @@ def generate_html(production_plan: dict, path: str):
     html = str(a).encode('utf-8')
     with open(path, 'wb') as f:
         f.write(html)
-    
-def example_run_old():
-    exact, inexact = search_object('uranium fuel rod', 'items')
-    print('Exact: ', exact)
-    if exact:
-        item = exact[0][1]
-    else:
-        print('No corresponding item found. Exiting')
-        quit()
-    children, recipes = get_child_items(item)
-    print('Child items: ', children)
-    print('Child recipes: ', recipes)
-    
-    qty = 10
-    production_plan = get_production_plan_old(item, qty, recipes)
-    print('\t--- PRODUCTION PLAN ---')
-    pretty_dict_print(production_plan)
-    
-    path = 'output\\test.html'
-    generate_html_old(production_plan, path)
-    
-    webbrowser.open(path)
     
 def example_run():
     production_plan, recipes = get_production_plan('Desc_NuclearFuelRod_C', 10, {}, data_baseresources)
@@ -886,16 +760,6 @@ def get_recipe_disp(recipe):
     machines = ', '.join([data_buildings[machine]['name'] for machine in data["producedIn"]])
     txt = f'{disp_name} (produced in {machines})'
     return txt
-
-def alter_pplan_recipes(production_plan: dict):
-    """
-    select tier
-    select items in tier itempool to change recipes
-    recompute production plan
-    do it again
-    add check to cleanum recipes for items that are not contained in the plan anymore
-    """
-    return production_plan
 
 def main():
     print('\t--- SATISBRAIN ---')
