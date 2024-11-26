@@ -309,21 +309,6 @@ class ComputingFrame(ttk.Frame):
         
         for tier in pplan.values():
             if 'itemtorec' in tier:
-                # left_items = [item_ for item_, qty_ in tier['itempool'].items()
-                #               if item_ not in self.base_resources
-                #               and qty_ > 10**(-brain.DIGITS)]
-                # #make a box to choose recipe if
-                # #item is not a base resource
-                # #desired quantity of item is positive (= needs to be crafted)
-                
-                # if 'recipepool' in tier:
-                #     temp_items = [item_ for item_ in left_items
-                #                   if ( set(brain.data_itemtorecipes[item_]) & set(tier['recipepool'].keys()) )]
-                #     left_items = temp_items
-                # additionnal condition if tier contains recipepool:
-                #only add box if item supposedly crafted in this tier (= there is a recipe in this tier that produces this item)
-                # (= the intersection of recipes that give this item and recipes in this tier is not empty set)
-                
                 separator = ttk.Separator(self.plan_frame.innerframe)
                 separator.pack(fill='x')
                 
@@ -331,8 +316,8 @@ class ComputingFrame(ttk.Frame):
                 
                 if left_items:
                     for i, item in enumerate(left_items):
-                        # Every 6 recipe, create a new line
-                        if i%6==0:
+                        # Every n recipe, create a new line
+                        if i%5==0:
                             line = ttk.Frame(self.plan_frame.innerframe)
                             line.pack(fill='x')
                         

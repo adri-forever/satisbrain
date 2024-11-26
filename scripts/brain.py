@@ -1,4 +1,4 @@
-import json, copy, timeit, airium, webbrowser, math
+import json, copy, timeit, airium, webbrowser, math, uuid
 from typing import Literal
 import numpy as np
 
@@ -569,7 +569,7 @@ def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
     
     machine = data_buildings[recipe_data['producedIn'][0]]['name']
     
-    with a.table():
+    with a.table(klass='checkbox_altered'):
         with a.tr():
             a.td(_t='')
             a.th(_t='Rate (/min)')
@@ -607,7 +607,7 @@ def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
                 a.td(_t='{:g}'.format(qrate), klass='high') 
 
 def get_recipe_title(recipe_data: dict) -> str:
-    return f'{recipe_data['name']} {'(alternate)' if recipe_data['alternate'] else ''}'
+    return f'{recipe_data['name']}{' (alternate)' if recipe_data['alternate'] else ''}'
 
 def generate_tier(a: airium.Airium, tierno: int, tier: dict):
     """
@@ -619,12 +619,11 @@ def generate_tier(a: airium.Airium, tierno: int, tier: dict):
             with a.div(klass='tiercontainer'):
                 for recipe in tier['recipepool']:
                     recipe_data = data_recipes[recipe]
-                    # a.button(type='button', klass='collapsible', _t=get_recipe_title(recipe_data))
-                    # with a.div(klass='content'):
-                    #     with a.div(klass='tablecont'):
-                    #         generate_recipe(a, recipe_data, tier['recipepool'][recipe])
                     with a.div(klass='tierbox'):
-                        a.h3(_t=get_recipe_title(recipe_data))
+                        with a.label(klass='recipe_checkbox'):
+                            a.input(type='checkbox', id=uuid.uuid1())
+                            a.span(klass='checkmark')
+                            a.h3(_t=get_recipe_title(recipe_data))
                         generate_recipe(a, recipe_data, tier['recipepool'][recipe])
         
 def generate_resources(a: airium.Airium, resources: dict, fltr: Literal['positive', 'negative', 'all'] = 'all'):
@@ -879,130 +878,13 @@ MAX_ITER = 10
 # Number of digits floats are rounded to
 DIGITS = 3
 
-# Web shit, CSS and JS
-style = """body {
-	background-color: #333;
-	color: white;
-	font-family: "Segoe UI", sans-serif;
-}
+# Load style
+with open('resource\\style.css', 'r') as stylefile:
+    style = stylefile.read()
 
-h2, h3 {
-    margin-bottom: 5px;
-}
-
-table, th {
-    border: 1px dashed #555;
-}
-
-td, th {
-	padding: 2px 8px;
-	font-size: 16px;
-}
-
-.tiercontainer {
-    display: flex;
-    flex-wrap: wrap; /* Allows the boxes to wrap onto the next line */
-    gap: 20px; /* Optional: Adds space between the boxes */
-    padding: 0 0 20px;
-}
-
-.tierbox {
-    flex: auto; /* Prevents the boxes from growing or shrinking */
-    justify-content: center;
-}
-
-.tablecont {
-    padding: 10px 10px;
-}
-
-.column {
-  float: left;
-  padding: 5px 40px;
-}
-
-/* Clear floats after the columns */
-.row:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-.expndall {
-	background-color: #555;
-	cursor: pointer;
-    color: white;
-	padding: 5px 10px;
-	border: none;
-	text-align: left;
-	outline: none;
-	font-size: 16px;
-	font-family: "Segoe UI", sans-serif;
-}
-
-.collapsible {
-	background-color: #555;
-	color: white;
-	cursor: pointer;
-	padding: 10px;
-	width: 100%;
-	border: none;
-	text-align: left;
-	outline: none;
-	font-size: 16px;
-	font-family: "Segoe UI", sans-serif;
-}
-
-.collapsible:hover, .expndall:hover {
-	background-color: #FA9649;
-}
-
-.active {
-	background-color: #777;
-}
-
-.content {
-	padding: 0 18px;
-	display: none;
-	overflow: hidden;
-	background-color: #333;
-}
-
-.high {
-	color: #FA9649
-}"""
-
-script = """var expnd = document.getElementsByClassName("expndall")[0];
-var coll = document.getElementsByClassName("collapsible");
-var i;
-
-for (i = 0; i < coll.length; i++) {
-    coll[i].addEventListener("click", function() {
-        this.classList.toggle("active");
-        var content = this.nextElementSibling;
-        if (content.style.display === "block") {
-            content.style.display = "none";
-        } else {
-        content.style.display = "block";
-        }
-    });
-}
-
-expnd.addEventListener("click", function() {
-    var state = false;
-    var style = "block";
-    for (i = 0; i < coll.length; i++) {
-        state = state || (coll[i].nextElementSibling.style.display==="block");
-    }
-
-    if (state) {
-        style = "none";
-    }
-
-    for (i = 0; i < coll.length; i++) {
-        coll[i].nextElementSibling.style.display=style;
-    coll[i].classList.toggle("active", !state)
-    }
-});"""
+# Load script
+with open('resource\\script.js', 'r') as scriptfile:
+    script = scriptfile.read()
 
 ### Main code ###
 if __name__=='__main__':
