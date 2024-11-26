@@ -351,19 +351,6 @@ def build_production_tier(tier: int, production_plan: dict, base_resources: list
             # Calculate the needed amount of machines to satisfy the needed quantity of items (/min)
             machine_qty = qty * recipe_data['time'] / (60 * item_qty)
             
-            # ----
-            # Check all previous tiers, if item was already part of an itempool prior retrieve it to this tier
-            # add the fetched item quantities to all pools inbetween
-            # add the machine quantity of pool fetched from to current machine quantity
-            # 
-            # children problem - if there is more than 1 tier difference between the puller and the pulled:
-            # fusing the recipes will not be a problem, but the quantities will fuck up
-            # the pulling tier will have the correct desired quantity, but will still fetch the extra children quantities
-            #
-            # other solution:
-            # only fuse at the end, the quantities will never fuck up ...
-            # ----
-            
             # Alter recipe pool
             production_plan[tiername]['recipepool'][recipe] = machine_qty
             
@@ -569,6 +556,7 @@ def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
     
     machine = data_buildings[recipe_data['producedIn'][0]]['name']
     
+    # Indicate with class that the table colors can be altered by the checkbox state
     with a.table(klass='checkbox_altered'):
         with a.tr():
             a.td(_t='')
@@ -620,8 +608,9 @@ def generate_tier(a: airium.Airium, tierno: int, tier: dict):
                 for recipe in tier['recipepool']:
                     recipe_data = data_recipes[recipe]
                     with a.div(klass='tierbox'):
+                        # Custom checkbox
                         with a.label(klass='recipe_checkbox'):
-                            a.input(type='checkbox', id=uuid.uuid1())
+                            a.input(type='checkbox', id=uuid.uuid1()) #Generate UUID for each checkbox (localStorage state)
                             a.span(klass='checkmark')
                             a.h3(_t=get_recipe_title(recipe_data))
                         generate_recipe(a, recipe_data, tier['recipepool'][recipe])
@@ -695,8 +684,6 @@ def generate_machines(a: airium.Airium, production_plan: dict):
 
 def generate_html(production_plan: dict, path: str):
     """
-    enlever les collapsibles de 2e etage, mettre titre en h3 avec recipe dans un truc (div?) et les mettre cote a cote
-    permettra peut etre d'avoir 2 tableaux cote a cote
     watch out for variable power consumption machines
     """
     a = airium.Airium()
@@ -857,7 +844,24 @@ except FileNotFoundError:
     print('Could not find data file. Program will not work')
     exit()
 
-#Decompose big dict
+try:
+    # Load style
+    with open('resource\\style.css', 'r') as stylefile:
+        style = stylefile.read()
+except FileNotFoundError:
+    print('Could not find style file. Produced report will be very ugly')
+    style = ''
+
+try:    
+    # Load script
+    with open('resource\\script.js', 'r') as scriptfile:
+        script = scriptfile.read()
+except FileNotFoundError:
+    print('Could not find script file. Deactivating style so produced report still works')
+    script = ''
+    style = ''
+
+#Decompose big data
 data_recipes = data['recipes']
 data_items = data['items']
 data_schematics = data['schematics']
@@ -877,14 +881,6 @@ data_baseresources = build_baseresources()
 MAX_ITER = 10
 # Number of digits floats are rounded to
 DIGITS = 3
-
-# Load style
-with open('resource\\style.css', 'r') as stylefile:
-    style = stylefile.read()
-
-# Load script
-with open('resource\\script.js', 'r') as scriptfile:
-    script = scriptfile.read()
 
 ### Main code ###
 if __name__=='__main__':
