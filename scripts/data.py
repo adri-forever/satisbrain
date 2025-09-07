@@ -40,14 +40,37 @@ def build_baseresources() -> set[str]:
     Include water even though it is a byproduct of many recipes
     
     Includes things like radioactive waste because its not crafted but byproduct of generator. whatever
+    
+    For 1.0: manually make the list for ores. they can now be transmuted.
+    iron, copper, limestone, coal, crystal, caterium, bauxite, uranium, sulfur, SAM(not necessary?), water, oil, nitrogen
     """
-    data_baseresources = {item for item, recipes in data_itemtodefaultrecipes.items() if not recipes}
+    data_baseresources = {item
+                          for item, recipes in data_itemtodefaultrecipes.items()
+                          if (not recipes)}
+    
+    data_baseresources.add('Desc_OreIron_C')
+    data_baseresources.add('Desc_OreBauxite_C')
+    data_baseresources.add('Desc_OreGold_C')
+    data_baseresources.add('Desc_OreCopper_C')
+    data_baseresources.add('Desc_OreUranium_C')
+    data_baseresources.add('Desc_Stone_C')
+    data_baseresources.add('Desc_Coal_C')
+    data_baseresources.add('Desc_Sulfur_C')
+    data_baseresources.add('Desc_RawQuartz_C')
+    data_baseresources.add('Desc_SAM_C')
+    
     data_baseresources.add('Desc_Water_C')
     data_baseresources.add('Desc_LiquidOil_C')
+    data_baseresources.add('Desc_NitrogenGas_C')
     
     return data_baseresources
 
+
 ### Script code ###
+data_recipes: dict
+data_items: dict
+data_buildings: dict
+
 try:
     # Source: https://satisfactory.wiki.gg/wiki/Template:DocsRecipes.json
     with open('resource\\DocsRecipes.json', encoding='utf8') as f:
@@ -76,3 +99,6 @@ data_itemtodefaultrecipes = build_item_to_recipes(alternates=False)
 
 #Generate base resources
 data_baseresources = build_baseresources()
+
+if __name__=='__main__':
+    print('Execution complete')

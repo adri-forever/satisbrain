@@ -2,3 +2,4 @@ pyinstaller
 ttkthemes
 tkinter-tooltip
 airium
+numpy

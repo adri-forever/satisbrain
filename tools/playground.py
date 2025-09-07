@@ -1,4 +1,6 @@
 from airium import Airium
+import tkinter as tk, sys
+from tkinter import filedialog
 
 a = Airium()
 
@@ -87,4 +89,17 @@ with a.html():
 
 
 if __name__ == '__main__':
-    print(a)
+    
+    root = tk.Tk()
+    
+    filetypes = [('HTML', '*.html')]
+    initialdir = '.\\output'
+    initialfile = 'report.html'
+    title = 'Save plan as'
+    
+    command= lambda: filedialog.asksaveasfilename(filetypes=filetypes, initialdir=initialdir, initialfile=initialfile, title=title)
+    
+    btn = tk.Button(text='here', command=command)
+    btn.pack()
+    
+    root.mainloop()
