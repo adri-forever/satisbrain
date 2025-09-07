@@ -242,7 +242,7 @@ class ComputingFrame(ttk.Frame):
     target_item: str = ''
     qty: float = 0
     recipes: dict[str: str] = {}
-    base_resources: set[str] = copy.deepcopy(brain.data_baseresources)
+    base_resources: set[str] = copy.deepcopy(brain.data.data_baseresources)
     production_plan: dict = {}
     
     pads = {'padx': 5, 'pady': 5}
@@ -333,11 +333,11 @@ class ComputingFrame(ttk.Frame):
         initialdir = '.\\output'
         title = 'Save plan as'
 
-        initialfile = f'Production_plan_{brain.data_items[self.target_item]['slug']}.html'
+        initialfile = f'Production_plan_{brain.data.data_items[self.target_item][0]['name']}.html'
         
         path = filedialog.asksaveasfilename(filetypes=filetypes, initialdir=initialdir, initialfile=initialfile, title=title)
         
-        brain.generate_html(self.production_plan, path)
+        brain.htmlreport.generate_html(self.production_plan, path)
         
         webbrowser.open(path)       
 
@@ -350,7 +350,7 @@ class ItemPicker(ttk.Frame):
         
         self.computingframe = computingframe
 
-        self.itemdict = {item_data['name']: item for item, item_data in brain.data_items.items() if item not in self.computingframe.base_resources}
+        self.itemdict = {item_data[0]['name']: item for item, item_data in brain.data.data_items.items() if item not in self.computingframe.base_resources}
         self.itemlist = list(self.itemdict.keys())
 
         ipads = {'ipadx': 0, 'ipady': 0}
@@ -437,7 +437,7 @@ class BaseResourceManager(ttk.Frame):
         self.remove_btn.grid(row=1, column=1, sticky='w')
     
     def update_tree(self):
-        self.itemdict = dict(sorted({brain.data_items[item]['name']: item for item in self.computingframe.base_resources}.items()))
+        self.itemdict = dict(sorted({brain.data.data_items[item][0]['name']: item for item in self.computingframe.base_resources}.items()))
         
         self.resourcebox.delete(0,'end')
         
@@ -461,7 +461,7 @@ class RecipePicker(ttk.Frame):
         self.computingframe = computingframe
         self.item = item
 
-        self.recipedict = {brain.data_recipes[recipe]['name']: recipe for recipe in brain.data_itemtorecipes[item]}
+        self.recipedict = {brain.data.data_recipes[recipe][0]['name']: recipe for recipe in brain.data.data_itemtorecipes[item]}
         self.recipelist = list(self.recipedict.keys())
         self.recipelist.append('Set as input')
 
@@ -472,7 +472,7 @@ class RecipePicker(ttk.Frame):
         self.header = ttk.Frame(self, style='light.TFrame')
         self.header.pack(fill='x', **ipads)
 
-        self.item_box = ttk.Label(self.header, text=brain.data_items[item]['name'], style='high.TLabel')
+        self.item_box = ttk.Label(self.header, text=brain.data.data_items[item][0]['name'], style='high.TLabel')
         self.item_box.pack(side='left', **pads)
         
         if item in self.computingframe.recipes:
@@ -481,14 +481,14 @@ class RecipePicker(ttk.Frame):
             default = brain.select_recipe(item)
         
         self.recipe_box = ttk.Combobox(self.header, values=self.recipelist, state='readonly')
-        self.recipe_box.set(brain.data_recipes[default]['name'])
+        self.recipe_box.set(brain.data.data_recipes[default][0]['name'])
         self.recipe_box.pack(side='left', **pads)
         self.recipe_box.bind('<<ComboboxSelected>>', self.change_recipe)
         
         body = ttk.Frame(self)
         body.pack(fill='both', **ipads)
         
-        recipe_data = brain.data_recipes[default]
+        recipe_data = brain.data.data_recipes[default][0]
         ncol = 3
         nprod = len(recipe_data['products'])
         ningr = len(recipe_data['ingredients'])
@@ -514,24 +514,24 @@ class RecipePicker(ttk.Frame):
         
         #products
         for i, product in enumerate(recipe_data['products']):
-            prodnamelabel = ttk.Label(body, text=brain.data_items[product['item']]['name'])
+            prodnamelabel = ttk.Label(body, text=brain.data.data_items[product['item']][0]['name'])
             prodnamelabel.grid(row=i+2, column=0, **kwargs)
             
-            rate = 60 * product['amount'] / recipe_data['time']
+            rate = 60 * product['amount'] / recipe_data['duration']
             prdratelabel = ttk.Label(body, text=rate)
             prdratelabel.grid(row=i+2, column=1, **kwargs)
             
         #ingredients
         for i, ingredient in enumerate(recipe_data['ingredients']):
-            ingrnamelabel = ttk.Label(body, text=brain.data_items[ingredient['item']]['name'])
+            ingrnamelabel = ttk.Label(body, text=brain.data.data_items[ingredient['item']][0]['name'])
             ingrnamelabel.grid(row=i+3+nprod, column=0, **kwargs)
             
-            rate = 60 * ingredient['amount'] / recipe_data['time']
+            rate = 60 * ingredient['amount'] / recipe_data['duration']
             ingrratelabel = ttk.Label(body, text=rate)
             ingrratelabel.grid(row=i+3+nprod, column=1, **kwargs)
         
         #producedin
-        machine = brain.data_buildings[recipe_data['producedIn'][0]]['name']
+        machine = brain.data.data_buildings[recipe_data['producedIn'][0]][0]['name']
         machinelabel = ttk.Label(body, text=machine)
         machinelabel.grid(row=1, column=2, **kwargs)
     

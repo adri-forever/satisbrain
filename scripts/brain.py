@@ -5,15 +5,26 @@ import numpy as np
 # personal imports
 import data, htmlreport
 
+# Constants
+MAX_ITER = 100 # Prevent infinite looping
+
 """
-for future: take into account if water is produced somewhere as a byproduct, substract produced to needed amount
+the ultimate test for this tool will be:
+successfuly produce a plan for fuel using diluted packaged fuel
+=> fuel (unpackage: packaged fuel)
+=> packaged fuel (diluted fuel: packaged water + heavy oil residue)
+=> packaged water (package: water) + heavy oil residue (heavy oil residue: oil)
+=> input: water, oil, canisters (0/min)
+=> extra: polymer resin
+
+inputs you should give:
+    alternates: packaged diluted fuel, heavy oil residue
+    
+    
+    
+Trucs a fixer: dans les recettes 'principales' n'utiliser que les recettes dont l'item est le premier output:
+NE PAS ESSAYER DE FABRIQUER DE LACIDE SULFURIQUE AVEC DES URANIUM CELL ????? Ca se fait avec du SULFUR et de LEAU merde
 """
-
-# constants
-
-# Prevent infinite looping
-MAX_ITER = 100
-
 
 ### Functions ###
 def get_details(key, datatype: Literal['recipes', 'items', 'schematics',

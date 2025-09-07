@@ -191,117 +191,19 @@ def generate_html(production_plan: dict, path: str):
     with open(path, 'wb') as f:
         f.write(html)
 
-style = """body {
-	background-color: #333;
-}
+try:
+    # Load style
+    with open('resource\\style.css', 'r') as stylefile:
+        style = stylefile.read()
+except FileNotFoundError:
+    print('Could not find style file. Produced report will be very ugly')
+    style = ''
 
-h1, h2, h3 {
-	color: white;
-	font-family: "Segoe UI", sans-serif;
-}
-
-table {
-	padding: 5px 0 5px;
-}
-
-table, th {
-    border: 1px dashed #444;
-}
-
-td, th {
-	padding: 1px 5px;
-	font-size: 16px;
-	color: white;
-	font-family: "Segoe UI", sans-serif;
-}
-
-.column {
-  float: left;
-  padding: 5px 40px;
-}
-
-/* Clear floats after the columns */
-.row:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-.expndall {
-	background-color: #555;
-	color: white;
-	cursor: pointer;
-	padding: 5px 10px;
-	border: none;
-	text-align: left;
-	outline: none;
-	font-size: 16px;
-	font-family: "Segoe UI", sans-serif;
-}
-
-.collapsible {
-	background-color: #555;
-	color: white;
-	cursor: pointer;
-	padding: 10px;
-	width: 100%;
-	border: none;
-	text-align: left;
-	outline: none;
-	font-size: 16px;
-	font-family: "Segoe UI", sans-serif;
-}
-
-.collapsible:hover, .expndall:hover {
-	background-color: #FA9649;
-}
-
-.active {
-	background-color: #777;
-}
-
-.content {
-	color: white;
-	padding: 0 18px;
-	display: none;
-	overflow: hidden;
-	background-color: #333;
-	font-family: "Segoe UI", sans-serif;
-}
-
-.high {
-	color: #FA9649
-}"""
-
-script = """var expnd = document.getElementsByClassName("expndall")[0];
-var coll = document.getElementsByClassName("collapsible");
-var i;
-
-for (i = 0; i < coll.length; i++) {
-    coll[i].addEventListener("click", function() {
-        this.classList.toggle("active");
-        var content = this.nextElementSibling;
-        if (content.style.display === "block") {
-            content.style.display = "none";
-        } else {
-        content.style.display = "block";
-        }
-    });
-}
-
-expnd.addEventListener("click", function() {
-    var state = false;
-    var style = "block";
-    for (i = 0; i < coll.length; i++) {
-        state = state || (coll[i].nextElementSibling.style.display==="block");
-    }
-
-    if (state) {
-        style = "none";
-    }
-
-    for (i = 0; i < coll.length; i++) {
-        coll[i].nextElementSibling.style.display=style;
-    coll[i].classList.toggle("active", !state)
-    }
-});"""
+try:    
+    # Load script
+    with open('resource\\script.js', 'r') as scriptfile:
+        script = scriptfile.read()
+except FileNotFoundError:
+    print('Could not find script file. Deactivating style so produced report still works')
+    script = ''
+    style = ''
