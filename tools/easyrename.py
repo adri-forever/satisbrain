@@ -13,7 +13,7 @@ parent_folder = os.path.join(current_dir, '..')
 sys.path.append(parent_folder)
 
 # from scripts import displayer
-from scripts import brain
+from python import brain
 
 class AutocompleteCombobox(ttk.Combobox):
 	"""

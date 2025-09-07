@@ -83,7 +83,7 @@ td, th {
     background-color: #777;
 }
 
-.content {
+.collapsiblecontent {
     padding: 0 18px;
     display: none;
     overflow: hidden;

@@ -1,5 +1,5 @@
 import airium, uuid, copy, math
-from typing import Literal
+from typing import Literal, Any
 
 # personal imports
 import data
@@ -7,14 +7,14 @@ import data
 # Constants
 DIGITS = 3
 
-def generate_recipe(a: airium.Airium, recipe_data: dict, qty: int):
+def generate_recipe(a: airium.Airium, recipe_data: dict[str, Any], qty: int):
     
     qty = round(qty, DIGITS)
     
     products = recipe_data['products']
     ingredients = recipe_data['ingredients']
     
-    machine = data.data_buildings[recipe_data['producedIn'][0]][0]['name']
+    machine: str = data.data_buildings[recipe_data['producedIn'][0]][0]['name']
     
     # Indicate with class that the table colors can be altered by the checkbox state
     with a.table(klass='checkbox_altered'):
@@ -62,7 +62,7 @@ def generate_tier(a: airium.Airium, tierno: int, tier: dict):
     add recipe name in tab and if alternate or not
     """
     a.button(type='button', klass='collapsible', _t=f'Stage {tierno}')
-    with a.div(klass='content'):
+    with a.div(klass='collapsiblecontent'):
         if 'recipepool' in tier:
             with a.div(klass='tiercontainer'):
                 for recipe in tier['recipepool']:
@@ -70,7 +70,7 @@ def generate_tier(a: airium.Airium, tierno: int, tier: dict):
                     with a.div(klass='tierbox'):
                         # Custom checkbox
                         with a.label(klass='recipe_checkbox'):
-                            a.input(type='checkbox', id=uuid.uuid1()) #Generate UUID for each checkbox (localStorage state)
+                            a.input(type='checkbox', id=str(uuid.uuid1())) #Generate UUID for each checkbox (localStorage state)
                             a.span(klass='checkmark')
                             a.h3(_t=get_recipe_title(recipe_data))
                         generate_recipe(a, recipe_data, tier['recipepool'][recipe])
@@ -193,7 +193,7 @@ def generate_html(production_plan: dict, path: str):
 
 try:
     # Load style
-    with open('resource\\style.css', 'r') as stylefile:
+    with open('static\\style\\style.css', 'r') as stylefile:
         style = stylefile.read()
 except FileNotFoundError:
     print('Could not find style file. Produced report will be very ugly')
@@ -201,7 +201,7 @@ except FileNotFoundError:
 
 try:    
     # Load script
-    with open('resource\\script.js', 'r') as scriptfile:
+    with open('static\\script\\report_script.js', 'r') as scriptfile:
         script = scriptfile.read()
 except FileNotFoundError:
     print('Could not find script file. Deactivating style so produced report still works')

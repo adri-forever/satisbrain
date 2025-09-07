@@ -148,12 +148,12 @@ class ScrollingFrame(tk.Canvas):
         
         self.create_window((0,0), window=self.innerframe, anchor='nw')
 
-    def scroller(self, event: tk.Event = None):
+    def scroller(self, event: tk.Event | None = None):
         if str(self) == self.notebook.select():
             self.configure(scrollregion=self.bbox('all'))
             
 class Window(tk.Tk):
-    
+
     tabcount = 0
     
     def __init__(self):
@@ -163,7 +163,7 @@ class Window(tk.Tk):
         #set icon
         self.geometry('720x480')
         
-        icon = tk.PhotoImage(file='resource\\image\\satisbrain.png')
+        icon = tk.PhotoImage(file='static\\image\\satisbrain.png')
         self.wm_iconphoto(False, icon)
         
         self.setup_style()
@@ -223,7 +223,8 @@ class Window(tk.Tk):
                              highlightbackground = '#FA9649')
         
 class TopButtonBar(ttk.Frame):
-    
+    master: Window
+
     def __init__(self, master: Window):
         super().__init__(master)
         
@@ -241,7 +242,7 @@ class ComputingFrame(ttk.Frame):
     
     target_item: str = ''
     qty: float = 0
-    recipes: dict[str: str] = {}
+    recipes: dict[str, str] = {}
     base_resources: set[str] = copy.deepcopy(brain.data.data_baseresources)
     production_plan: dict = {}
     
