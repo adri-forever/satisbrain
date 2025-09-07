@@ -5,6 +5,10 @@ from typing import Literal
 
 import brain
 
+"""
+This is the ugly tkinter version
+"""
+
 ### Classes ###
 class AutocompleteCombobox(ttk.Combobox):
     """
@@ -136,7 +140,7 @@ class ComputingFrame(tk.Canvas):
     """
     
     item: str = ''
-    base_resources: list = brain.data_baseresources
+    base_resources: list = brain.data.data_baseresources
 
     def __init__(self, master: ttk.Notebook):
         super().__init__(master, highlightthickness=0)
@@ -188,7 +192,7 @@ class ItemContainer(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
 
-        self.itemdict = {item_data['name']: item for item, item_data in brain.data_items.items() if item not in self.master.base_resources}
+        self.itemdict = {item_data[0]['name']: item for item, item_data in brain.data.data_items.items() if item not in self.master.base_resources}
         self.itemlist = list(self.itemdict.keys())
 
         ipads = {'ipadx': 0, 'ipady': 0}
@@ -221,7 +225,7 @@ class RecipeContainer(ttk.Frame):
     def __init__(self, master, item: str):
         super().__init__(master)
 
-        self.recipedict = {brain.data_recipes[recipe]['name']: recipe for recipe in brain.data_itemtorecipes[item].values()}
+        self.recipedict = {brain.data.data_recipes[recipe]['name']: recipe for recipe in brain.data.data_itemtorecipes[item].values()}
         self.recipelist = list(self.recipedict.keys())
 
         ipads = {'ipadx': 0, 'ipady': 0}

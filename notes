@@ -1,0 +1,6 @@
+index with welcome page, title and shit
+
+div thats going to be replaced
+
+post request to send generator (target item, qty, alternates)
+reponse is the json, locally build html plan
