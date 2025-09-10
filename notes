@@ -1,6 +1,23 @@
+download select2 for dropdowns
+
 index with welcome page, title and shit
 
-div thats going to be replaced
+send item list (to set in dropdown of base box)
+
+post request with that item and no recipe
+
+recieve plan 
+
+build plan ==> or recieve built plan ...
 
 post request to send generator (target item, qty, alternates)
 reponse is the json, locally build html plan
+=> as API / webservice, not as page refresh ?
+
+edit mode: remplacer titre par une dropdown
+
+savegarder des presets (target item, recipes) (copier coller un json / uploader un json) (+ bouton d export)
+
+statut: pas seulement oui non mais nouveau, demarre, termine
+
+dans un tier, shit click ne collapse pas juste le tier mais aussi tout ce qu'il y a dedans (et inversement)

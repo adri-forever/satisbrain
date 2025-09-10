@@ -1,6 +1,12 @@
-pyinstaller
+#brain
+numpy
+
+#server version
+flask
+
+#html report
+airium
+
+#tkinter version
 ttkthemes
 tkinter-tooltip
-airium
-numpy
-flask

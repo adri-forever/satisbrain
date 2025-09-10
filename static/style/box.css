@@ -1,0 +1,71 @@
+/* General */
+.box { box-sizing: border-box; display: inline-block; }
+
+.box .content {
+	border: 1px dashed var(--gray5);
+	border-top-width: 0;
+	padding: 5px;
+	overflow: hidden;
+}
+
+/* Header */
+.box > .header {
+	background: var(--gray5);
+	
+	font-weight: bold;
+	font-size: large;
+
+	padding: 5px;
+	padding-left: 10px;
+
+	display: flex;
+	justify-content: space-between;
+
+	white-space: nowrap;
+}
+
+.box > .header .title2 { display: none; }
+.box.recipe > .header .title2 { display: unset; } /* only show title2 for recipes */
+
+.box > .header > .left, .box > .header > .right { display: flex; gap: 1rem; }
+
+/* Header buttons */
+.box > .header button { display: none; aspect-ratio: 1; padding: 0; min-width: 1.5rem;}
+.box > .header button::before { margin: 0; }
+
+.box > .header button.validate::before { content: "\e5ca"; } /* Check */
+.box > .header button.edit::before { content: "\e3c9"; } /* Pen */
+.box.edit > .header button.edit::before { content: "\e5cd"; } /* Cross */
+.box > .header button.status.wip::before { content: "\e726"; } /* Cog */
+.box > .header button.status.done::before { content: "\e5ca"; } /* Check */
+.box > .header button.collapse::before { content: "V"; } /* Down arrow */
+.box.collapsed > .header button.collapse::before { content: ">"; } /* Right arrow when collapsed */
+
+.box.item > .header button.status,
+.box.recipe > .header button.status,
+.box.item > .header button.edit,
+.box.recipe > .header button.edit  { display: unset; }  /* Edit and status buttons are available for reciepes and items */
+
+.box.edit.item > .header button.validate,
+.box.edit.recipe > .header button.validate { display: unset; } /* Validate button is only available in edition */
+
+.box > .header button.collapse { display: unset; } /* Collapse button always available */
+.box.collapsed > .content { height: 0px; padding: 0; }
+
+/* Header input */
+.box datalist { display: none; }
+.box select {
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	color: inherit;
+	border: 0;
+	background: inherit;
+}
+.box select:hover {	color: var(--orangesatis); }
+
+.box > .header select { display: none; }
+.box.edit > .header select { display: unset; } /* Show dropdown in edit mode*/
+.box.item.edit > .header .title1,
+.box.recipe.edit > .header .title2
+{ display: none; } /* Hide first title for item, hide second for recipe */

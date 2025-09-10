@@ -1,0 +1,257 @@
+:root {
+	--gray3: #333;
+	--gray5: #555;
+	--gray7: #777;
+	--graya: #aaa;
+	--whitec: #ccc;
+	--orangesatis: #FA9649;
+	--checkgreen: #30dd30;
+}
+
+/* General */
+html, body {
+	height: 100%;
+	margin: 0;
+}
+
+body {
+	background-color: var(--gray3);
+	color: white;
+	font-family: "Segoe UI", sans-serif;
+	display: flex;
+	flex-direction: column;
+}
+
+* { box-sizing: border-box; }
+
+*::before {
+	font-family: 'Material Symbols';
+	vertical-align: sub;
+	margin-right: 3px;
+	font-size: 1.25em;
+	display: inline-block;
+}
+
+button {
+	background: var(--gray5);
+	color: white;
+	border: 1px dashed var(--gray7);
+}
+
+button:hover {
+	cursor: pointer;
+	background: var(--orangesatis);
+}
+
+/* Page header */
+body > .header {
+	background: var(--gray5);
+	padding: 5px 5px 5px 10px;
+}
+
+body > .header h1 { margin: 0px; }
+
+body > .header div {
+	color: var(--whitec);
+	margin-left: 10px
+}
+
+/* Page footer */
+body > .footer {
+	background: var(--gray5);
+	padding: 5px 10px;
+}
+
+body > .footer p { margin: 0px; float: left; }
+
+body > .footer a {
+	color: white;
+	font-weight: bold;
+	text-decoration: unset;
+	float: right;
+}
+
+body > .footer a::before { content: "\e157"; font-size: 1.25em; } /* link icon */
+body > .footer a:hover { color: var(--orangesatis); }
+
+/* Page content */
+body > .content {
+	flex: 1;
+	padding: 5px;
+}
+
+/* Old */
+h1 {
+	background: var(--gray5);
+	/* padding: 10px; */
+}
+
+h2, h3 {
+	margin-bottom: 5px;
+}
+
+table, th {
+	border: 1px dashed var(--gray5);
+}
+
+td, th {
+	padding: 2px 8px;
+	font-size: 16px;
+}
+
+.tiercontainer {
+	display: flex;
+	flex-wrap: wrap; /* Allows the boxes to wrap onto the next line */
+	gap: 20px; /* Optional: Adds space between the boxes */
+	padding: 0 0 20px;
+}
+
+.tierbox {
+	flex: auto; /* Prevents the boxes from growing or shrinking */
+	justify-content: center;
+}
+
+.tablecont {
+	padding: 10px 10px;
+}
+
+.column {
+	float: left;
+	padding: 5px 40px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+	content: "";
+	display: table;
+	clear: both;
+}
+
+.expndall {
+	background-color: var(--gray5);
+	cursor: pointer;
+	color: white;
+	padding: 5px 10px;
+	border: none;
+	text-align: left;
+	outline: none;
+	font-size: 16px;
+	font-family: "Segoe UI", sans-serif;
+}
+
+.collapsible {
+	background-color: var(--gray5);
+	color: white;
+	cursor: pointer;
+	padding: 10px;
+	width: 100%;
+	border: none;
+	text-align: left;
+	outline: none;
+	font-size: 16px;
+	font-family: "Segoe UI", sans-serif;
+}
+
+.collapsible:hover, .expndall:hover {
+	background-color: var(--orangesatis);
+}
+
+.active {
+	background-color: var(--gray7);
+}
+
+.collapsiblecontent {
+	padding: 0 18px;
+	display: none;
+	overflow: hidden;
+	background-color: var(--gray3);
+}
+
+.high {
+	color: var(--orangesatis)
+}
+
+/* Customize the label (the container) */
+.recipe_checkbox {
+	display: block;
+	position: relative;
+	padding-left: 35px;
+	margin-bottom: 12px;
+	margin-top: 12px;
+	cursor: pointer;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.recipe_checkbox input {
+	position: absolute;
+	opacity: 0;
+	cursor: pointer;
+	height: 0;
+	width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 25px;
+	width: 25px;
+	background-color: white;
+}
+
+/* Set hover colors. Important so that even when checked, the orange has priority over the green*/
+.recipe_checkbox:hover input ~ .checkmark {
+	background-color: var(--orangesatis) !important;
+}
+
+.recipe_checkbox:hover h3 {
+	color: var(--orangesatis) !important;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+	content: "";
+	position: absolute;
+	display: none;
+}
+
+/* Show the checkmark when checked */
+.recipe_checkbox input:checked ~ .checkmark:after {
+	display: block;
+}
+
+/* Style the checkmark/indicator */
+.recipe_checkbox .checkmark:after {
+	left: 9px;
+	top: 5px;
+	width: 5px;
+	height: 10px;
+	border: solid white;
+	border-width: 0 3px 3px 0;
+	-webkit-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+
+/* When the checkbox is checked, add a green background */
+.recipe_checkbox input:checked ~ .checkmark {
+	background-color: var(--checkgreen);
+}
+
+/* Alter neighboring elements when checked*/
+.recipe_checkbox:has(input:checked) ~ .checkbox_altered {
+	color: var(--graya);
+}
+
+.recipe_checkbox:has(input:checked) ~ .checkbox_altered .high {
+	color: var(--checkgreen);
+}
+
+.recipe_checkbox:has(input:checked) h3 {
+	text-decoration: line-through;
+}

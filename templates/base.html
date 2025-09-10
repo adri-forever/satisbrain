@@ -1,14 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="X-UA-Compatible" content="ie=edge">
-        <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
-        <link rel="icon" href="{{ url_for('static', filename='image/satisbrain.png') }}">
-        {% block head %}{% endblock %}
-    </head>
-    <body>
-         {% block body %}{% endblock %}
-    </body>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<!-- lib styles -->
+		<link rel="stylesheet" href="{{ url_for('static', filename='style/select2.min.css') }}">
+
+		<!-- custom styles -->
+		<link rel="stylesheet" href="{{ url_for('static', filename='style/main.css') }}">
+		<link rel="stylesheet" href="{{ url_for('static', filename='style/box.css') }}">
+		<link rel="stylesheet" href="{{ url_for('static', filename='style/fonts.css') }}">
+
+		<!-- icon -->
+		<link rel="icon" href="{{ url_for('static', filename='image/satisbrain.png') }}">
+		<title>Satisbrain</title>
+		{% block head %}{% endblock %}
+	</head>
+	<body>
+    	<div class="header">
+			<h1>Satisbrain</h1>
+			<div>Satisfactory production planning tool</div>
+		</div>
+		{% block body %}{% endblock %}
+		<div class="footer">
+			<a href="https://github.com/adri-forever/satisbrain" target="_blank">Satisbrain GitHub</a>
+			<p>Adri Forever</p>
+		</div>
+	</body>
+
+	<!-- lib scripts -->
+	<script src="{{ url_for('static', filename='script/jquery-3.7.1.min.js')}}"></script>
+	<script src="{{ url_for('static', filename='script/select2.min.js')}}"></script>
+
+	<!-- custom scripts -->
+	<script src="{{ url_for('static', filename='script/templates.js')}}"></script>
+	<script src="{{ url_for('static', filename='script/examplerun.js')}}"></script>
 </html>
