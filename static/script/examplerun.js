@@ -15,6 +15,7 @@ $(document).ready(() => {
 		select.append($('<option>').attr('value', key).text(value));
 	}
 	select.find(`option[value="${boxvalue}"]`).attr("selected", "selected");
+    select.select2();
 
 	$('.content').append(itembox);
 });

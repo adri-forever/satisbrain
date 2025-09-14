@@ -20,17 +20,19 @@
 
 	display: flex;
 	justify-content: space-between;
+	gap: 2rem;
 
 	white-space: nowrap;
 }
 
+.box > .header .title1 { padding: 3px 0 1.7px 9px; } /* mimic the dropdown placement for a somewhat seamless transition*/
 .box > .header .title2 { display: none; }
 .box.recipe > .header .title2 { display: unset; } /* only show title2 for recipes */
 
 .box > .header > .left, .box > .header > .right { display: flex; gap: 1rem; }
 
 /* Header buttons */
-.box > .header button { display: none; aspect-ratio: 1; padding: 0; min-width: 1.5rem;}
+.box > .header button { display: none; aspect-ratio: 1; padding: 0; min-width: 1.75rem;}
 .box > .header button::before { margin: 0; }
 
 .box > .header button.validate::before { content: "\e5ca"; } /* Check */
@@ -38,13 +40,13 @@
 .box.edit > .header button.edit::before { content: "\e5cd"; } /* Cross */
 .box > .header button.status.wip::before { content: "\e726"; } /* Cog */
 .box > .header button.status.done::before { content: "\e5ca"; } /* Check */
-.box > .header button.collapse::before { content: "V"; } /* Down arrow */
-.box.collapsed > .header button.collapse::before { content: ">"; } /* Right arrow when collapsed */
+.box > .header button.collapse::before { content: "\e5c5"; } /* Down arrow */
+.box.collapsed > .header button.collapse::before { content: "\e5df"; } /* Right arrow when collapsed */
 
 .box.item > .header button.status,
 .box.recipe > .header button.status,
 .box.item > .header button.edit,
-.box.recipe > .header button.edit  { display: unset; }  /* Edit and status buttons are available for reciepes and items */
+.box.recipe > .header button.edit { display: unset; }  /* Edit and status buttons are available for reciepes and items */
 
 .box.edit.item > .header button.validate,
 .box.edit.recipe > .header button.validate { display: unset; } /* Validate button is only available in edition */
@@ -53,19 +55,26 @@
 .box.collapsed > .content { height: 0px; padding: 0; }
 
 /* Header input */
-.box datalist { display: none; }
-.box select {
-	font-family: inherit;
-	font-size: inherit;
-	font-weight: inherit;
-	color: inherit;
-	border: 0;
-	background: inherit;
-}
-.box select:hover {	color: var(--orangesatis); }
+.box .selector select { display: none; }
+.box .selector .select2-selection { background: inherit; }
+.box .selector .select2-selection__rendered { color: inherit; }
 
-.box > .header select { display: none; }
-.box.edit > .header select { display: unset; } /* Show dropdown in edit mode*/
+.box .select2-container--default .select2-selection--single { border-radius: 0; }
+.box .selector:hover .select2-selection { border-color: var(--orangesatis); }
+.box .selector .select2-container--open .select2-selection { border-color: var(--orangesatis); border-bottom: 0;}
+
+.box .selector .select2-selection__arrow b { border-color: white transparent transparent transparent; }
+.box .selector .select2-container--open .select2-selection__arrow b { border-color: transparent transparent white transparent; }
+.box .selector:hover .select2-selection__arrow b { border-color: var(--orangesatis) transparent transparent transparent; }
+.box .selector:hover .select2-container--open .select2-selection__arrow b { border-color: transparent transparent var(--orangesatis) transparent; }
+.box .selector:hover { color: var(--orangesatis); }
+
+.select2-container .select2-dropdown { background: var(--gray5); border-radius: 0; border-color: var(--orangesatis);}
+.select2-container--default .select2-results .select2-results__option--selected { background: var(--gray5); }
+.select2-container--default .select2-results .select2-results__option--highlighted.select2-results__option--selectable { background: var(--orangesatis); }
+.select2-container .select2-dropdown input { background: inherit; color: inherit; font: inherit; }
+
+.box > .header .selector { display: none; }
+.box.edit > .header .selector { display: unset; } /* Show dropdown in edit mode*/
 .box.item.edit > .header .title1,
-.box.recipe.edit > .header .title2
-{ display: none; } /* Hide first title for item, hide second for recipe */
+.box.recipe.edit > .header .title2 { display: none; } /* Hide first title for item, hide second for recipe */

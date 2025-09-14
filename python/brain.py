@@ -1,9 +1,12 @@
-import webbrowser, copy, os
+import webbrowser, copy, os, sys
 from typing import Literal
+from pathlib import Path
 import numpy as np
 
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 # personal imports
-import data, htmlreport
+from python import data, htmlreport
 
 # Constants
 MAX_ITER = 100 # Prevent infinite looping
@@ -80,7 +83,7 @@ def alter_itempool(itempool: dict[str, float], recipe_data: dict, machine_qty: f
     
     return itempool
 
-def get_production_plan(target_item: str, base_resources: set[str], recipes: dict[str, str] = {}, qty: float = 1.) -> list[dict]:
+def get_production_plan(target_item: str, base_resources: set[str], recipes: dict[str, str] = {}, qty: float = 1.) -> tuple[dict]:
     # Contains steps
     production_plan = []
     production_plan.append({'itempool': {target_item: qty}})

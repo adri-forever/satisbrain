@@ -1,23 +1,28 @@
-download select2 for dropdowns
+download select2 for dropdowns -> good
 
-index with welcome page, title and shit
+index with welcome page, title and shit -> good
 
-send item list (to set in dropdown of base box)
+send item list (to set in dropdown of base box) -> good
 
-post request with that item and no recipe
+post request with that item and no recipe -> good
 
-recieve plan 
-
-build plan ==> or recieve built plan ...
+recieve plan -> good
 
 post request to send generator (target item, qty, alternates)
 reponse is the json, locally build html plan
-=> as API / webservice, not as page refresh ?
+=> as API / webservice, not as page refresh ? -> good
 
-edit mode: remplacer titre par une dropdown
+edit mode: remplacer titre par une dropdown -> good
+
+build plan ==> or recieve built plan ...
+    => recieve built plan, build properly according to new template
+
+base resource handler
+
+tier box is just a box that takes whole width => extend our box class to that
 
 savegarder des presets (target item, recipes) (copier coller un json / uploader un json) (+ bouton d export)
 
 statut: pas seulement oui non mais nouveau, demarre, termine
 
-dans un tier, shit click ne collapse pas juste le tier mais aussi tout ce qu'il y a dedans (et inversement)
+dans un tier, shift click ne collapse pas juste le tier mais aussi tout ce qu'il y a dedans (et inversement)
