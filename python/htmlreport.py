@@ -60,7 +60,7 @@ def generate_recipe(a: airium.Airium, recipe_data: dict[str, Any], qty: int):
 def get_recipe_title(recipe_data: dict) -> str:
 	return f'{recipe_data['name']}{' (alternate)' if recipe_data['alternate'] else ''}'
 
-def generate_tier(a: airium.Airium, tierno: int, tier: dict):
+def generate_tier_old(a: airium.Airium, tierno: int, tier: dict):
 	"""
 	add recipe name in tab and if alternate or not
 	"""
@@ -185,7 +185,7 @@ def generate_html(production_plan: dict, path: str):
 			a.button(type='button', klass='expndall', _t='Expand/Collapse all')
 			for i in range(0, len(production_plan)-2):
 				# Offset by 2 because first tier only has target item and second only has target recipe
-				generate_tier(a, i+1, production_plan[i+2])
+				generate_tier_old(a, i+1, production_plan[i+2])
 		with a.script():
 			a(script)
 
@@ -229,7 +229,7 @@ def generate_box(a: airium.Airium, boxtype: str = '', item: str = '', recipe: st
 			else:
 				print(f"Could not interpret content of box with title {title}. Type {type(content)}")
 
-def generate_tier(a) -> airium.Airium:
+def generate_tier(a: airium.Airium, tier: dict) -> airium.Airium:
     """
     This is to be used in a with, its preset
     """
@@ -264,7 +264,7 @@ def landing_page_flask() -> str:
 	#
 
 	a = airium.Airium()
-	with a.div(klass="box item edit collapsed", **{"data-item": ""}): # bypass - being an invalid name in python by using kwargs
+	with a.div(klass="box item edit collapsed", **{"data-item": ""}): # bypass '-' being an invalid character in python by using kwargs
 		with a.div(klass="header"):
 			with a.div(klass="left"):
 				a.button(klass="status")
@@ -282,6 +282,7 @@ def landing_page_flask() -> str:
 
 def generate_html_flask(production_plan: dict) -> str:
 	"""
+	MOST OF THIS FUNCTION SHALL BE REWRITTEN!!!
 	watch out for variable power consumption machines
 	"""
 	a = airium.Airium()
@@ -311,7 +312,7 @@ def generate_html_flask(production_plan: dict) -> str:
 	a.button(type='button', klass='expndall', _t='Expand/Collapse all')
 	for i in range(1, len(production_plan)):
 		# Offset by 1 because first tier only has target item
-		generate_tier(a, i, production_plan[i])
+		generate_tier(a, production_plan[i])
 
 	return str(a)
 

@@ -16,6 +16,17 @@ edit mode: remplacer titre par une dropdown -> good
 
 build plan ==> or recieve built plan ...
     => recieve built plan, build properly according to new template
+*** WHAT TO DO FOR THAT ***
+Build airium(?) function to generate a box with as options:
+    its type (item, recipe, generic(none))
+    edit activated by default or not
+    if custom, the content
+        titles passed as arguments
+        body of the box should be filled using "with FUNCTION() as b: b.div() ..."
+    if item or recipe, a preselection
+    collapsed state
+=> with that, call box to build each tier inside
+    => within each tier, build the recipe boxes
 
 base resource handler
 
