@@ -1,0 +1,388 @@
+<div class="row">
+  <div class="column">
+    <h2>Recipe: Aluminum Ingot</h2>
+    <table class="checkbox_altered">
+      <tr>
+        <td></td>
+        <th>Rate (/min)</th>
+        <th>Total (/min)</th>
+        <th>Produced in</th>
+        <th>Amount</th>
+      </tr>
+      <tr>
+        <th>Products</th>
+      </tr>
+      <tr>
+        <td>Aluminum Ingot</td>
+        <td>60</td>
+        <td class="high">1.02</td>
+        <td>Foundry</td>
+        <td>0.017</td>
+      </tr>
+      <tr>
+        <th>Ingredients</th>
+      </tr>
+      <tr>
+        <td>Aluminum Scrap</td>
+        <td>90</td>
+        <td class="high">1.53</td>
+      </tr>
+      <tr>
+        <td>Silica</td>
+        <td>75</td>
+        <td class="high">1.275</td>
+      </tr>
+    </table>
+  </div>
+  <div class="column">
+    <h2>Input</h2>
+    <table>
+      <tr>
+        <th>Resource</th>
+        <th>Total (/min)</th>
+      </tr>
+      <tr>
+        <td>Water</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td>Coal</td>
+        <td>0.5</td>
+      </tr>
+      <tr>
+        <td>Raw Quartz</td>
+        <td>0.75</td>
+      </tr>
+      <tr>
+        <td>Bauxite</td>
+        <td>1</td>
+      </tr>
+    </table>
+  </div>
+</div>
+<div class="row">
+  <div class="column">
+    <h2>Machines & power</h2>
+    <table>
+      <tr>
+        <th>Machine</th>
+        <th>Quantity</th>
+        <th>Estimated power (MW)</th>
+      </tr>
+      <tr>
+        <td>Foundry</td>
+        <td>0.017</td>
+        <td>0.267</td>
+      </tr>
+      <tr>
+        <td>Refinery</td>
+        <td>0.013</td>
+        <td>0.375</td>
+      </tr>
+      <tr>
+        <td>Constructor</td>
+        <td>0.033</td>
+        <td>0.133</td>
+      </tr>
+      <tr>
+        <td>Total</td>
+        <td></td>
+        <td>0.775</td>
+      </tr>
+    </table>
+    <p>Resource extraction ignored. Variable power buildings not computed</p>
+  </div>
+  <div class="column">
+    <h2>Extra resources</h2>
+    <table>
+      <tr>
+        <th>Resource</th>
+        <th>Total (/min)</th>
+      </tr>
+      <tr>
+        <td>Silica</td>
+        <td>0.417</td>
+      </tr>
+    </table>
+  </div>
+</div>
+<h2>Production steps</h2>
+<div class="box   " data-item="">
+  <div class="header">
+    <div class="left">
+      <button class="status"></button>
+      <div class="title1">Stage 1</div>
+      <div class="title2"></div>
+    </div>
+    <div class="right">
+      <button class="validate" onclick="validate(this)"></button>
+      <button class="edit" onclick="toggleedit(this)"></button>
+      <button class="collapse" onclick="togglecollapse(this)"></button>
+    </div>
+    <div class="content">
+      <div class="tiercontainer">
+        <div class="box recipe edit " data-item="Desc_AluminumIngot_C">
+          <div class="header">
+            <div class="left">
+              <button class="status"></button>
+              <div class="title1">Aluminum Ingot</div>
+              <div class="title2">Aluminum Ingot</div>
+              <div class="selector">
+                <select id="0a37ac30-d0d1-4d7f-a9db-e61dc2dfcb84">
+                  <option value="Recipe_PureAluminumIngot_C">Pure Aluminum Ingot</option>
+                  <option value="Recipe_IngotAluminum_C">Aluminum Ingot</option>
+                </select>
+              </div>
+            </div>
+            <div class="right">
+              <button class="validate" onclick="validate(this)"></button>
+              <button class="edit" onclick="toggleedit(this)"></button>
+              <button class="collapse" onclick="togglecollapse(this)"></button>
+            </div>
+            <div class="content">
+              <table class="checkbox_altered">
+                <tr>
+                  <td></td>
+                  <th>Rate (/min)</th>
+                  <th>Total (/min)</th>
+                  <th>Produced in</th>
+                  <th>Amount</th>
+                </tr>
+                <tr>
+                  <th>Products</th>
+                </tr>
+                <tr>
+                  <td>Aluminum Ingot</td>
+                  <td>60</td>
+                  <td class="high">1.02</td>
+                  <td>Foundry</td>
+                  <td>0.017</td>
+                </tr>
+                <tr>
+                  <th>Ingredients</th>
+                </tr>
+                <tr>
+                  <td>Aluminum Scrap</td>
+                  <td>90</td>
+                  <td class="high">1.53</td>
+                </tr>
+                <tr>
+                  <td>Silica</td>
+                  <td>75</td>
+                  <td class="high">1.275</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="box   " data-item="">
+  <div class="header">
+    <div class="left">
+      <button class="status"></button>
+      <div class="title1">Stage 2</div>
+      <div class="title2"></div>
+    </div>
+    <div class="right">
+      <button class="validate" onclick="validate(this)"></button>
+      <button class="edit" onclick="toggleedit(this)"></button>
+      <button class="collapse" onclick="togglecollapse(this)"></button>
+    </div>
+    <div class="content">
+      <div class="tiercontainer">
+        <div class="box recipe edit " data-item="Desc_AluminumScrap_C">
+          <div class="header">
+            <div class="left">
+              <button class="status"></button>
+              <div class="title1">Aluminum Scrap</div>
+              <div class="title2">Aluminum Scrap</div>
+              <div class="selector">
+                <select id="6a1003b2-2600-4760-8d13-e48ad8fafa1b">
+                  <option value="Recipe_AluminumScrap_C">Aluminum Scrap</option>
+                  <option value="Recipe_Alternate_ElectroAluminumScrap_C">Electrode Aluminum Scrap</option>
+                  <option value="Recipe_Alternate_InstantScrap_C">Instant Scrap</option>
+                </select>
+              </div>
+            </div>
+            <div class="right">
+              <button class="validate" onclick="validate(this)"></button>
+              <button class="edit" onclick="toggleedit(this)"></button>
+              <button class="collapse" onclick="togglecollapse(this)"></button>
+            </div>
+            <div class="content">
+              <table class="checkbox_altered">
+                <tr>
+                  <td></td>
+                  <th>Rate (/min)</th>
+                  <th>Total (/min)</th>
+                  <th>Produced in</th>
+                  <th>Amount</th>
+                </tr>
+                <tr>
+                  <th>Products</th>
+                </tr>
+                <tr>
+                  <td>Aluminum Scrap</td>
+                  <td>360</td>
+                  <td class="high">1.44</td>
+                  <td>Refinery</td>
+                  <td>0.004</td>
+                </tr>
+                <tr>
+                  <td>Water</td>
+                  <td>120</td>
+                  <td class="high">0.48</td>
+                </tr>
+                <tr>
+                  <th>Ingredients</th>
+                </tr>
+                <tr>
+                  <td>Alumina Solution</td>
+                  <td>240</td>
+                  <td class="high">0.96</td>
+                </tr>
+                <tr>
+                  <td>Coal</td>
+                  <td>120</td>
+                  <td class="high">0.48</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="box recipe edit " data-item="Desc_Silica_C">
+          <div class="header">
+            <div class="left">
+              <button class="status"></button>
+              <div class="title1">Silica</div>
+              <div class="title2">Silica</div>
+              <div class="selector">
+                <select id="56d00645-b207-4676-9f69-83470ed75648">
+                  <option value="Recipe_AluminaSolution_C">Alumina Solution</option>
+                  <option value="Recipe_Silica_C">Silica</option>
+                  <option value="Recipe_Alternate_Silica_Distilled_C">Distilled Silica</option>
+                  <option value="Recipe_Alternate_Silica_C">Cheap Silica</option>
+                </select>
+              </div>
+            </div>
+            <div class="right">
+              <button class="validate" onclick="validate(this)"></button>
+              <button class="edit" onclick="toggleedit(this)"></button>
+              <button class="collapse" onclick="togglecollapse(this)"></button>
+            </div>
+            <div class="content">
+              <table class="checkbox_altered">
+                <tr>
+                  <td></td>
+                  <th>Rate (/min)</th>
+                  <th>Total (/min)</th>
+                  <th>Produced in</th>
+                  <th>Amount</th>
+                </tr>
+                <tr>
+                  <th>Products</th>
+                </tr>
+                <tr>
+                  <td>Silica</td>
+                  <td>37.5</td>
+                  <td class="high">1.238</td>
+                  <td>Constructor</td>
+                  <td>0.033</td>
+                </tr>
+                <tr>
+                  <th>Ingredients</th>
+                </tr>
+                <tr>
+                  <td>Raw Quartz</td>
+                  <td>22.5</td>
+                  <td class="high">0.743</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="box   " data-item="">
+  <div class="header">
+    <div class="left">
+      <button class="status"></button>
+      <div class="title1">Stage 3</div>
+      <div class="title2"></div>
+    </div>
+    <div class="right">
+      <button class="validate" onclick="validate(this)"></button>
+      <button class="edit" onclick="toggleedit(this)"></button>
+      <button class="collapse" onclick="togglecollapse(this)"></button>
+    </div>
+    <div class="content">
+      <div class="tiercontainer">
+        <div class="box recipe edit " data-item="Desc_AluminaSolution_C">
+          <div class="header">
+            <div class="left">
+              <button class="status"></button>
+              <div class="title1">Alumina Solution</div>
+              <div class="title2">Alumina Solution</div>
+              <div class="selector">
+                <select id="eab75a49-15d2-4867-9e3d-91e89d54133d">
+                  <option value="Recipe_AluminaSolution_C">Alumina Solution</option>
+                  <option value="Recipe_UnpackageAlumina_C">Unpackage Alumina Solution</option>
+                  <option value="Recipe_Alternate_SloppyAlumina_C">Sloppy Alumina</option>
+                </select>
+              </div>
+            </div>
+            <div class="right">
+              <button class="validate" onclick="validate(this)"></button>
+              <button class="edit" onclick="toggleedit(this)"></button>
+              <button class="collapse" onclick="togglecollapse(this)"></button>
+            </div>
+            <div class="content">
+              <table class="checkbox_altered">
+                <tr>
+                  <td></td>
+                  <th>Rate (/min)</th>
+                  <th>Total (/min)</th>
+                  <th>Produced in</th>
+                  <th>Amount</th>
+                </tr>
+                <tr>
+                  <th>Products</th>
+                </tr>
+                <tr>
+                  <td>Alumina Solution</td>
+                  <td>120</td>
+                  <td class="high">0.96</td>
+                  <td>Refinery</td>
+                  <td>0.008</td>
+                </tr>
+                <tr>
+                  <td>Silica</td>
+                  <td>50</td>
+                  <td class="high">0.4</td>
+                </tr>
+                <tr>
+                  <th>Ingredients</th>
+                </tr>
+                <tr>
+                  <td>Bauxite</td>
+                  <td>120</td>
+                  <td class="high">0.96</td>
+                </tr>
+                <tr>
+                  <td>Water</td>
+                  <td>180</td>
+                  <td class="high">1.44</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -103,7 +103,7 @@ td, th {
 	display: flex;
 	flex-wrap: wrap; /* Allows the boxes to wrap onto the next line */
 	gap: 20px; /* Optional: Adds space between the boxes */
-	padding: 0 0 20px;
+	/* padding: 0 0 20px; */
 }
 
 .tierbox {

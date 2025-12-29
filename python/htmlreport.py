@@ -1,6 +1,9 @@
 import airium, uuid, copy, math, sys
 from typing import Literal, Any
 from pathlib import Path
+from contextlib import contextmanager
+import webbrowser
+import os
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
@@ -9,6 +12,12 @@ from python import data
 
 # Constants
 DIGITS = 3
+
+def dict_getkey(di: dict[str, Any], val: Any):
+	for k, v in di.items():
+		if v==val:
+			return k
+	return None
 
 def generate_recipe(a: airium.Airium, recipe_data: dict[str, Any], qty: int):
 
@@ -193,7 +202,7 @@ def generate_html(production_plan: dict, path: str):
 	with open(path, 'wb') as f:
 		f.write(html)
 
-def generate_box(a: airium.Airium, boxtype: str = '', item: str = '', recipe: str = '', title: str = '', content: str = '', edit: bool = False, collapsed: bool = False):
+def generate_box_nocont(a: airium.Airium, boxtype: str = '', item: str = '', recipe: str = '', title: str = '', content: str = '', edit: bool = False, collapsed: bool = False):
 	title2: str = ""
 
 	dropdownvalues: dict[str, str] = {"": "--"}
@@ -229,90 +238,136 @@ def generate_box(a: airium.Airium, boxtype: str = '', item: str = '', recipe: st
 			else:
 				print(f"Could not interpret content of box with title {title}. Type {type(content)}")
 
-def generate_tier(a: airium.Airium, tier: dict) -> airium.Airium:
-    """
-    This is to be used in a with, its preset
-    """
-    return a
-
-def landing_page_flask() -> str:
-	"""<div class="box">
-		<div class="header">
-			<div class="left">
-				<button class="status"></button><!-- status button -- only appears for item and recipe boxes -->
-				<div class="title1"></div> <!-- item, machine, etc -->
-				<div class="title2"></div> <!-- recipe -- only appears for recipe boxes -->
-				<div class="selector"><select></select></div> <!-- item/recipe selection dropdown -->
-			</div>
-			<div class="right">
-				<button class="validate"></button> <!-- only appears in box edit mode -->
-				<button class="edit" onclick="toggleedit(this)"></button> <!-- edit/view -- only appears for item and recipe boxes -->
-				<button class="collapse" onclick="togglecollapse(this)"></button> <!-- collapse box -->
-			</div>
-		</div>
-		<div class="content">
-			<!-- whatever content to be set inside -->
-		</div>
-	</div>
+def generate_table():
 	"""
-	# for item:
-	#	item, type(item), dropdown choices
-	# for recipe:
-	#	item, type(recipe), recipe, dropdown choices
-	# for other:
-	#	title(custom), type(other) tabular data / message
-	#
+	<table class="checkbox_altered">
+	  <tbody><tr>
+		<td></td>
+		<th>Rate (/min)</th>
+		<th>Total (/min)</th>
+		<th>Produced in</th>
+		<th>Amount</th>
+	  </tr>
+	  <tr>
+		<th>Products</th>
+	  </tr>
+	  <tr>
+		<td>Aluminum Ingot</td>
+		<td>60</td>
+		<td class="high">1.02</td>
+		<td>Foundry</td>
+		<td>0.017</td>
+	  </tr>
+	  <tr>
+		<th>Ingredients</th>
+	  </tr>
+	  <tr>
+		<td>Aluminum Scrap</td>
+		<td>90</td>
+		<td class="high">1.53</td>
+	  </tr>
+	  <tr>
+		<td>Silica</td>
+		<td>75</td>
+		<td class="high">1.275</td>
+	  </tr>
+	</tbody></table>
+	"""
+	"""
+	passer une matrice de données à afficher
+	passer une recette génère le tableau
+	"""
+	
+	pass
 
-	a = airium.Airium()
-	with a.div(klass="box item edit collapsed", **{"data-item": ""}): # bypass '-' being an invalid character in python by using kwargs
+@contextmanager
+def generate_box(a: airium.Airium, boxtype: str = '', item: str = '', recipe: str = '', title: str = '', edit: bool = False, collapsed: bool = False):
+	title2: str = ""
+
+	dropdownvalues: dict[str, str] = {"": "--"}
+
+	if boxtype in ["item", "recipe"]:
+		if item in data.data_items:
+			title = data.data_items[item][0]["name"]
+	if boxtype=="item":
+		dropdownvalues = {key: value[0]['name'] for key, value in data.data_items.items()}
+	if boxtype=="recipe":
+		title2 = data.data_recipes[recipe][0]["name"]
+		dropdownvalues = {key: value[0]['name'] for key, value in data.data_recipes.items() if key in data.data_itemtorecipes[item]}
+
+	with a.div(klass=f"box {boxtype} {"edit" if edit else ""} {"collapsed" if collapsed else ""}", **{"data-item": item}): # bypass - being an invalid name in python by using kwargs
 		with a.div(klass="header"):
 			with a.div(klass="left"):
 				a.button(klass="status")
-				a.div(klass="title1")
-				a.div(klass="title2")
-				with a.div(klass="selector").select(id=uuid.uuid4()):
-					for key, value in data.data_items.items():
-						a.option(value=key, _t=value[0]['name'])
+				a.div(klass="title1", _t=title)
+				a.div(klass="title2", _t=title2)
+				if boxtype in ["item", "recipe"]:
+					with a.div(klass="selector").select(id=uuid.uuid4()):
+						for key, value in dropdownvalues.items():
+							attributes = {'_t': value, 'value': key}
+							if (boxtype=="item" and key==item) or (boxtype=="recipe" and key==recipe):
+								attributes["selected"] = "selected"
+							a.option(**attributes)
 			with a.div(klass="right"):
 				a.button(klass="validate", onclick="validate(this)")
 				a.button(klass="edit", onclick="toggleedit(this)")
 				a.button(klass="collapse", onclick="togglecollapse(this)")
-		a.div(klass="content")
-	return str(a)
+		with a.div(klass="content"):
+			yield
 
-def generate_html_flask(production_plan: dict) -> str:
-	"""
-	MOST OF THIS FUNCTION SHALL BE REWRITTEN!!!
-	watch out for variable power consumption machines
-	"""
+def generate_tier(a: airium.Airium, tier: dict, tierno: int) -> airium.Airium:
+	with generate_box(a, 'tier', '', '', f'Stage {tierno}', False, False):
+		if 'recipepool' in tier:
+			for recipe in tier['recipepool']:
+				item = dict_getkey(tier['itemtorec'], recipe)
+				recipe_data = data.data_recipes[recipe][0]
+				with generate_box(a, 'recipe', item, recipe, '', True, False):
+					generate_recipe(a, recipe_data, tier['recipepool'][recipe])
+	return a
+
+def generate_html_flask(production_plan: list[dict] = []) -> str:
 	a = airium.Airium()
 
-	target_item = list(production_plan[0]['itempool'].keys())[0]
-	target_recipe = list(production_plan[1]['recipepool'].keys())[0]
-	target_quantity = production_plan[0]['itempool'][target_item]
-	target_quantity = '{:g}'.format(round(target_quantity, DIGITS))
+	target_item = ''
+	if len(production_plan) > 0:
+		target_item = list(production_plan[0]['itempool'].keys())[0]
+	# target_recipe = list(production_plan[1]['recipepool'].keys())[0]
+	# target_quantity = production_plan[0]['itempool'][target_item]
+	# target_quantity = '{:g}'.format(round(target_quantity, DIGITS))
 
-	item_name = data.data_items[target_item][0]['name']
+	# item_name = data.data_items[target_item][0]['name']
 
-	with a.div(klass='row'):
-		with a.div(klass='column'):
-			a.h2(_t=f'Recipe: {get_recipe_title(data.data_recipes[target_recipe][0])}')
-			generate_recipe(a, data.data_recipes[target_recipe][0], production_plan[1]['recipepool'][target_recipe])
-		with a.div(klass='column'):
-			a.h2(_t='Input')
-			generate_resources(a, production_plan[-1]['itempool'], 'positive')
-	with a.div(klass='row'):
-		with a.div(klass='column'):
-			a.h2(_t='Machines & power')
-			generate_machines(a, production_plan)
-		with a.div(klass='column'):
-			a.h2(_t='Extra resources')
-			generate_resources(a, production_plan[-1]['itempool'], 'negative')
-	a.h2(_t='Production steps')
-	a.button(type='button', klass='expndall', _t='Expand/Collapse all')
+	with generate_box(a, '', '', '', 'Configuration'):
+		with generate_box(a, 'item', target_item, '', '', True, False):
+			pass
+		# base resource hander
+		# quantity handler
+	
+	with generate_box(a, '', '', '', 'Information'):
+		# base resource
+		# machines
+		# extra resource
+		pass
+
+	# with a.div(klass='row'):
+	# 	with a.div(klass='column'):
+	# 		a.h2(_t=f'Recipe: {get_recipe_title(data.data_recipes[target_recipe][0])}')
+	# 		generate_recipe(a, data.data_recipes[target_recipe][0], production_plan[1]['recipepool'][target_recipe])
+	# 	with a.div(klass='column'):
+	# 		a.h2(_t='Input')
+	# 		generate_resources(a, production_plan[-1]['itempool'], 'positive')
+	# with a.div(klass='row'):
+	# 	with a.div(klass='column'):
+	# 		a.h2(_t='Machines & power')
+	# 		generate_machines(a, production_plan)
+	# 	with a.div(klass='column'):
+	# 		a.h2(_t='Extra resources')
+	# 		generate_resources(a, production_plan[-1]['itempool'], 'negative')
+	# a.button(type='button', klass='expndall', _t='Expand/Collapse all')
+
 	for i in range(1, len(production_plan)):
 		# Offset by 1 because first tier only has target item
-		generate_tier(a, production_plan[i])
+		generate_tier(a, production_plan[i], i)
 
 	return str(a)
 
@@ -332,3 +387,15 @@ except FileNotFoundError:
 	print('Could not find script file. Deactivating style so produced report still works')
 	script = ''
 	style = ''
+
+if __name__=="__main__":
+	print('testing box "with" generation')
+	
+	prodplan = [{'itempool': {'Desc_AluminumIngot_C': 1.0, 'Desc_Silica_C': 0}}, {'itempool': {'Desc_AluminumScrap_C': 1.5, 'Desc_Silica_C': 1.25}, 'recipepool': {'Recipe_IngotAluminum_C': 0.016666666666666666}, 'itemtorec': {'Desc_AluminumIngot_C': 'Recipe_IngotAluminum_C'}}, {'itempool': {'Desc_Water_C': -0.5, 'Desc_AluminaSolution_C': 1.0, 'Desc_Coal_C': 0.5, 'Desc_RawQuartz_C': 0.75}, 'recipepool': {'Recipe_AluminumScrap_C': 0.004166666666666667, 'Recipe_Silica_C': 0.03333333333333333}, 'itemtorec': {'Desc_AluminumScrap_C': 'Recipe_AluminumScrap_C', 'Desc_Silica_C': 'Recipe_Silica_C'}}, {'itempool': {'Desc_Water_C': 1.0, 'Desc_Coal_C': 0.5, 'Desc_RawQuartz_C': 0.75, 'Desc_Silica_C': -0.4166666666666667, 'Desc_OreBauxite_C': 1.0}, 'recipepool': {'Recipe_AluminaSolution_C': 0.008333333333333333}, 'itemtorec': {'Desc_AluminaSolution_C': 'Recipe_AluminaSolution_C'}}]
+	html = generate_html_flask(prodplan)
+	
+	tstrep = 'testreport.html'
+	with open(tstrep, 'w') as f:
+		f.write(html)
+	webbrowser.open(os.getcwd()+'\\'+tstrep)
+	print('travail terminé')

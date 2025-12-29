@@ -1,39 +1,18 @@
-download select2 for dropdowns -> good
+fix recipe change bug
 
-index with welcome page, title and shit -> good
+when box is item type, automatically fill content with item description
+when box is recipe type, automatically fill content with table (requires passing quantity)
 
-send item list (to set in dropdown of base box) -> good
+tables: refaire les contours (enlever celui du tour de la table ?)
 
-post request with that item and no recipe -> good
-
-recieve plan -> good
-
-post request to send generator (target item, qty, alternates)
-reponse is the json, locally build html plan
-=> as API / webservice, not as page refresh ? -> good
-
-edit mode: remplacer titre par une dropdown -> good
-
-build plan ==> or recieve built plan ...
-    => recieve built plan, build properly according to new template
-*** WHAT TO DO FOR THAT ***
-Build airium(?) function to generate a box with as options:
-    its type (item, recipe, generic(none))
-    edit activated by default or not
-    if custom, the content
-        titles passed as arguments
-        body of the box should be filled using "with FUNCTION() as b: b.div() ..."
-    if item or recipe, a preselection
-    collapsed state
-=> with that, call box to build each tier inside
-    => within each tier, build the recipe boxes
+add scalability
 
 base resource handler
 
-tier box is just a box that takes whole width => extend our box class to that
+reinstate base resource, extra resource, and machine display
+
+dans un tier, shift click ne collapse pas juste le tier mais aussi tout ce qu'il y a dedans (et inversement)
 
 savegarder des presets (target item, recipes) (copier coller un json / uploader un json) (+ bouton d export)
 
 statut: pas seulement oui non mais nouveau, demarre, termine
-
-dans un tier, shift click ne collapse pas juste le tier mais aussi tout ce qu'il y a dedans (et inversement)

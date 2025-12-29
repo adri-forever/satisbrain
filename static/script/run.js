@@ -19,6 +19,7 @@ async function send() {
 
 	if ("html" in result) {
 		$('body .content')[0].innerHTML = result["html"];
+		init_select2();
 	}
 }
 
@@ -46,12 +47,16 @@ function validate(that) {
 	send();
 }
 
-var json = {};
-
-$().ready(() => {
+function init_select2() {
     $('select').select2({
         dropdownAutoWidth : true,
         width: 'auto'
     });
+}
+
+var json = {};
+
+$().ready(() => {
+	init_select2();
     // console.log('select2');
 })

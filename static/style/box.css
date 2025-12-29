@@ -1,11 +1,17 @@
 /* General */
 .box { box-sizing: border-box; display: inline-block; }
 
+.box.tier { width: 100%; }
+
 .box .content {
 	border: 1px dashed var(--gray5);
 	border-top-width: 0;
 	padding: 5px;
 	overflow: hidden;
+
+	display: flex;
+	gap: 20px;
+	flex-wrap: wrap;
 }
 
 /* Header */
@@ -25,7 +31,8 @@
 	white-space: nowrap;
 }
 
-.box > .header .title1 { padding: 3px 0 1.7px 9px; } /* mimic the dropdown placement for a somewhat seamless transition*/
+.box > .header .title1,
+.box > .header .title2 { padding: 3px 0 1.7px 9px; } /* mimic the dropdown placement for a somewhat seamless transition*/
 .box > .header .title2 { display: none; }
 .box.recipe > .header .title2 { display: unset; } /* only show title2 for recipes */
 
@@ -75,6 +82,6 @@
 .select2-container .select2-dropdown input { background: inherit; color: inherit; font: inherit; }
 
 .box > .header .selector { display: none; }
-.box.edit > .header .selector { display: unset; } /* Show dropdown in edit mode*/
+.box.edit > .header .selector, .box.edit > .header .selector select { display: unset; } /* Show dropdown in edit mode*/
 .box.item.edit > .header .title1,
 .box.recipe.edit > .header .title2 { display: none; } /* Hide first title for item, hide second for recipe */
