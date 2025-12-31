@@ -1,5 +1,3 @@
-fix recipe change bug
-
 when box is item type, automatically fill content with item description
 when box is recipe type, automatically fill content with table (requires passing quantity)
 
@@ -7,6 +5,7 @@ tables: refaire les contours (enlever celui du tour de la table ?)
 
 add scalability
 
+fix setting as base resource 
 base resource handler
 
 reinstate base resource, extra resource, and machine display
