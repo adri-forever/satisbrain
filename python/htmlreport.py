@@ -376,8 +376,12 @@ def generate_html_flask(production_plan: list[dict] = []) -> str:
     with generate_box(a, '', '', '', 'Configuration'):
         with generate_box(a, 'item', target_item, '', '', True, False):
             pass
-        # base resource hander
-        # quantity handler
+
+        with generate_box(a, 'baseresource', '', '', 'Base resource handler', False, False):
+            pass
+
+        with generate_box(a, 'quantity', '', '', 'Quantity', False, False):
+            pass
 
     with generate_box(a, '', '', '', 'Information'):
         # base resource
@@ -400,6 +404,12 @@ def generate_html_flask(production_plan: list[dict] = []) -> str:
     # 		a.h2(_t='Extra resources')
     # 		generate_resources(a, production_plan[-1]['itempool'], 'negative')
     # a.button(type='button', klass='expndall', _t='Expand/Collapse all')
+
+    # Expand all button: make button
+    # when clicked, get .box.tier.collapsed
+    # if any, remove collapsed from all .box.tier
+    # else add collapsed to all .box.tier (using toggleClass, a class wont be added twice)
+    # if shift is pressed, also target children .box of .box.tier
 
     for i in range(1, len(production_plan)):
         # Offset by 1 because first tier only has target item

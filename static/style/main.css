@@ -33,7 +33,7 @@ body {
 }
 
 button {
-	background: var(--gray5);
+	background: inherit;
 	color: white;
 	border: 1px dashed var(--gray7);
 }

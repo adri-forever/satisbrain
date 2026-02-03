@@ -39,7 +39,7 @@
 .box > .header > .left, .box > .header > .right { display: flex; gap: 1rem; }
 
 /* Header buttons */
-.box > .header button { display: none; aspect-ratio: 1; padding: 0; min-width: 1.75rem;}
+.box > .header button { display: none; aspect-ratio: 1; padding: 0; min-width: 1.75rem; }
 .box > .header button::before { margin: 0; }
 
 .box > .header button.validate::before { content: "\e5ca"; } /* Check */
@@ -85,3 +85,33 @@
 .box.edit > .header .selector, .box.edit > .header .selector select { display: unset; } /* Show dropdown in edit mode*/
 .box.item.edit > .header .title1,
 .box.recipe.edit > .header .title2 { display: none; } /* Hide first title for item, hide second for recipe */
+
+/* Base resource box */
+.box.baseresource .content {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	gap: 5px;
+
+	max-height: 30vh;
+	overflow-y: auto;
+}
+
+.box.baseresource .resource {
+	border: 1px dashed var(--gray5);
+	padding: 3px 3px 3px 5px;
+	display: flex;
+	align-items: center;
+}
+
+.box.baseresource .resource button.delete {
+	margin-left: auto;
+	aspect-ratio: 1;
+	padding: 0;
+	min-width: 1.75rem;
+}
+
+.box.baseresource .resource button.delete::before {
+	content: "\e872";
+	margin: 0;
+}

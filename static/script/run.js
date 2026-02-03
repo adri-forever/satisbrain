@@ -18,15 +18,18 @@ async function send() {
     console.log(result);
 
     if (result.hasOwnProperty("recipes")) {
-        json["recipes"] = result["recipes"]
+        json["recipes"] = result["recipes"];
     }
     if (result.hasOwnProperty("baseresource")) {
-        json["baseresource"] = result["baseresource"]
+        json["baseresource"] = result["baseresource"];
+    }
+    if (result.hasOwnProperty("dictionary")) {
+        dictionary = result["dictionary"];
     }
     if (result.hasOwnProperty("html")) {
         // replace content with built html
         $('body .content')[0].innerHTML = result["html"];
-        init_select2(); //initialize autocompletes
+        init(); //initialize page modules
     }
 }
 
@@ -36,7 +39,7 @@ function validateitem(box) {
 }
 
 function validaterecipe(box) {
-    console.log('recipe:', json);
+    // console.log('recipe:', json);
     let item = box.attr('data-item');
     let value = box.find('.selector select').val();
     if (value == 'baseresource') {
@@ -52,6 +55,19 @@ function validaterecipe(box) {
     }
 }
 
+function removebaseresource(that) {
+    // console.log('baseresource:', json)
+    let item = $(that).closest('.resource').attr('data-item');
+    let index = -1;
+
+    if (json.hasOwnProperty("baseresource")) {
+        index = json["baseresource"].indexOf(item); // find index of requested item to remove from list
+        if (index >= 0) {
+            json["baseresource"].splice(index, 1); // remove 1 element at index
+        }
+    }
+}
+
 function validate(that) {
     let box = $(that).closest(".box");
     let classes = box[0].classList;
@@ -59,24 +75,64 @@ function validate(that) {
     if (classes.contains("item")) {
         console.log('validating item')
         validateitem(box);
-    } else {
+    } else if (classes.contains("recipe")) {
         validaterecipe(box);
         console.log('validating recipe')
+    }  else if (classes.contains("baseresource")) {
+        removebaseresource(that);
+        console.log('removing base resource')
+    } else {
+        console.log('Could not validate box with classes ' + Array.from(classes).join(', '))
     }
 
     send();
 }
 
-function init_select2() {
+function get_baseresource_entry(item) {
+    entry = $('<div>').addClass('resource').attr('data-item', item.item).append(
+        $('<span>').text(item.name)
+    ).append(
+        $('<button>').addClass('delete').attr('onclick', 'validate(this)')
+    )
+    return entry
+}
+
+function init() {
+    // Autocompletes
     $('select').select2({
         dropdownAutoWidth : true,
         width: 'auto'
     });
+
+    // Base resource handler
+    if (json['baseresource']) {
+        let items = [];
+        let itemname;
+
+        // get translation for all items
+        for (let i=0; i<json['baseresource'].length; i++) {
+            itemname = json['baseresource'][i];
+            if (dictionary["items"][json['baseresource'][i]]) {
+                itemname = dictionary["items"][json['baseresource'][i]];
+            }
+            items.push({"item": json['baseresource'][i], "name": itemname});
+        }
+
+        // sort alphabetically
+        let sorted = items.sort(function(a, b) {return a.name.localeCompare(b.name)})
+
+        // create entries
+        for (let i=0; i<sorted.length; i++) {
+            $('.box.baseresource .content').append(get_baseresource_entry(sorted[i]));
+        }
+    }
+
+    // Quantity handler
 }
 
 var json = {};
+var dictionary = {};
 
 $().ready(() => {
-    init_select2();
-    // console.log('select2');
+    init();
 })

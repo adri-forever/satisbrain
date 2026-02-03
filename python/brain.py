@@ -1,4 +1,3 @@
-from python import data, htmlreport
 import webbrowser
 import copy
 import os
@@ -10,9 +9,11 @@ import numpy as np
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # personal imports
+from python import data, htmlreport
 
 # Constants
-MAX_ITER = 100  # Prevent infinite looping
+MAX_ITER = 15  # Prevent infinite looping
+EPSILON = 1e-6
 
 """
 the ultimate test for this tool will be:
@@ -33,7 +34,6 @@ NE PAS ESSAYER DE FABRIQUER DE LACIDE SULFURIQUE AVEC DES URANIUM CELL ????? Ca 
 """
 
 ### Functions ###
-
 
 def select_recipe(item: str):
     recipe = ''
@@ -71,6 +71,20 @@ def select_recipe(item: str):
         print(f'No recipe found for item {data.data_items[item][0]['name']}')
     return recipe
 
+def get_product_quantity(recipe_data: dict, item: str) -> float:
+    # for multi product recipes, find the produced quantity of desired 
+
+    qty: float = -1
+
+    for product in recipe_data["products"]:
+        if product['item'] == item:
+            qty = product['amount']
+            break
+    
+    if qty<0:
+        raise ValueError(f'Could not find product {item} in recipe {recipe_data['className']}')
+    
+    return qty
 
 def alter_itempool(itempool: dict[str, float], recipe_data: dict, machine_qty: float, key: Literal['products', 'ingredients'] | None = None):
     # Apply the effects of a recipe on the current itempool (substract the products, add the ingredients)
@@ -122,8 +136,8 @@ def get_production_plan(target_item: str, base_resources: set[str], recipes: dic
         # the advantage of doing that during tier building is that we have left_items to refer to
 
         # List all items to produce in said tier
-        left_items = [item_ for item_, qty_ in itempool.items(
-        ) if qty_ > 1e-5 and item_ not in data.data_baseresources]
+        left_items = [item_ for item_, qty_ in itempool.items()
+                      if qty_ > EPSILON and item_ not in base_resources]
 
         if not left_items:
             # if no items are left to craft, exit loop (and dont make a next tier)
@@ -142,8 +156,7 @@ def get_production_plan(target_item: str, base_resources: set[str], recipes: dic
 
             if not recipe:
                 base_resources.add(item)
-                print(
-                    f'No available recipe for {data.data_items[item][0]['name']}. It has been added to base resources')
+                print(f'No available recipe for {data.data_items[item][0]['name']}. It has been added to base resources')
                 continue
 
             production_plan[i]['itemtorec'][item] = recipe
@@ -151,8 +164,7 @@ def get_production_plan(target_item: str, base_resources: set[str], recipes: dic
             recipe_data = data.data_recipes[recipe][0]
 
             # decide number of machines for recipe: divide asked quantity by recipe rate (/min)
-            machine_qty = itempool[item] / (60 * recipe_data['products']
-                                            [0]['amount'] / recipe_data['duration'])
+            machine_qty = itempool[item] / (60 * get_product_quantity(recipe_data, item) / recipe_data['duration'])
 
             # Alter recipe pool
             production_plan[i]['recipepool'][recipe] = machine_qty
@@ -165,7 +177,7 @@ def get_production_plan(target_item: str, base_resources: set[str], recipes: dic
 
         # Remove items with quantity 0
         empty_items = [item_ for item_, qty_ in itempool.items() if abs(
-            qty_) < 1e-5]  # Ignore items with too low of a quantity
+            qty_) < EPSILON]  # Ignore items with too low of a quantity
         for empty_item in empty_items:
             itempool.pop(empty_item)
 
@@ -194,9 +206,9 @@ def get_production_plan(target_item: str, base_resources: set[str], recipes: dic
         if len(tiers_recipe) > 1:
             for i in tiers_recipe:
                 production_plan[i]['recipepool'].pop(recipe)
-                production_plan[i]['itemtorec'].pop(item)
-            production_plan[tiers_recipe[-1]
-                            ]['recipepool'][recipe] = recipetotal
+                if item in production_plan[i]['itemtorec']: # item may not be in itemtorec if the recipe has the item as byproduct and has not been chosen for this purpose
+                    production_plan[i]['itemtorec'].pop(item)
+            production_plan[tiers_recipe[-1]]['recipepool'][recipe] = recipetotal
             production_plan[tiers_recipe[-1]]['itemtorec'][item] = recipe
 
         # Propagate item quantities
@@ -210,10 +222,11 @@ def get_production_plan(target_item: str, base_resources: set[str], recipes: dic
                 plan['itempool'][item] += itemtotal
                 itemtotal = plan['itempool'][item]
 
-    return production_plan, recipes
+    return production_plan, recipes, base_resources
 
 
 def example_run():
+
     production_plan, recipes = get_production_plan(
         'Desc_NuclearFuelRod_C', data.data_baseresources)
     # data.pretty_dict_print(production_plan)
@@ -230,6 +243,21 @@ def example_run():
 
 ### Main code ###
 if __name__ == '__main__':
-    example_run()
+    # example_run()
+    import json
 
+    payloadstr = """
+        {"item": "Desc_AluminumIngot_C", "recipes": {"Desc_AluminaSolution_C": "Recipe_AluminaSolution_C", "Desc_AluminumIngot_C": "Recipe_IngotAluminum_C", "Desc_AluminumScrap_C": "Recipe_AluminumScrap_C", "Desc_Silica_C": "Recipe_Silica_C"}, "baseresource": ["Desc_Silica_C"]}
+    """
+    payload = json.loads(payloadstr)
+    item = payload['item']
+    recipes = payload['recipes']
+    baseresource = set(payload['baseresource'])
+
+    production_plan: dict
+    production_plan, recipes = get_production_plan(
+        item, baseresource, recipes, 100)
+    
+    print(production_plan)
+    
     print('Travail terminé')
