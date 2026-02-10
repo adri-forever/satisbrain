@@ -27,7 +27,7 @@ def dict_getkey(di: dict[str, Any], val: Any):
 
 def generate_recipe(a: airium.Airium, recipe_data: dict[str, Any], qty: int):
 
-    qty = round(qty, DIGITS)
+    # qty = round(qty, DIGITS):
 
     products = recipe_data['products']
     ingredients = recipe_data['ingredients']
@@ -49,15 +49,15 @@ def generate_recipe(a: airium.Airium, recipe_data: dict[str, Any], qty: int):
                 prd_name = data.data_items[product['item']][0]['name']
                 rate = 60 * product['amount'] / recipe_data['duration']
 
-                qrate = round(qty * rate, DIGITS)
-                rate = round(rate, DIGITS)
+                # qrate = round(qty * rate, DIGITS)
+                # rate = round(rate, DIGITS)
 
                 a.td(_t=prd_name)
-                a.td(_t='{:g}'.format(rate))
-                a.td(_t='{:g}'.format(qrate), klass='high')
+                a.td(klass='scalable', **{'data-value': rate})
+                a.td(klass='high scalable', **{'data-value': qty * rate})
                 if i == 0:
                     a.td(_t=machine)
-                    a.td(_t='{:g}'.format(qty))
+                    a.td(klass='scalable', **{'data-value': qty})
         with a.tr():
             a.th(_t='Ingredients')
         for i, ingredient in enumerate(ingredients):
@@ -65,12 +65,12 @@ def generate_recipe(a: airium.Airium, recipe_data: dict[str, Any], qty: int):
                 ingr_name = data.data_items[ingredient['item']][0]['name']
                 rate = 60 * ingredient['amount'] / recipe_data['duration']
 
-                qrate = round(qty * rate, DIGITS)
-                rate = round(rate, DIGITS)
+                # qrate = round(qty * rate, DIGITS)
+                # rate = round(rate, DIGITS)
 
                 a.td(_t=ingr_name)
-                a.td(_t='{:g}'.format(rate))
-                a.td(_t='{:g}'.format(qrate), klass='high')
+                a.td(klass='scalable', **{'data-value': rate})
+                a.td(klass='high scalable', **{'data-value': qty * rate})
 
 
 def get_recipe_title(recipe_data: dict) -> str:

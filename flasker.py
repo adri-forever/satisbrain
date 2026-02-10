@@ -37,7 +37,7 @@ def send():
         baseresource = brain.data.data_baseresources
 
     production_plan: dict
-    production_plan, recipes, baseresource = brain.get_production_plan(item, baseresource, recipes, 100)
+    production_plan, recipes, baseresource = brain.get_production_plan(item, baseresource, recipes, 1)
     
     dictionary = fill_dictionary(baseresource)
 

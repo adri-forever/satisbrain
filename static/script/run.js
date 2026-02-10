@@ -97,6 +97,24 @@ function get_baseresource_entry(item) {
     return entry
 }
 
+function setfactor(force) {
+    var _factor = parseFloat($('#quantity').val());
+
+    console.log('_factor', _factor);
+
+    var update = !isNaN(_factor) && factor!=_factor;
+    if (update) {
+        factor = _factor;
+    }
+    if (update || force) {
+        console.log('factor', factor)
+
+        $('.scalable').each(function() {
+            this.innerText = (parseFloat(this.getAttribute('data-value')) * factor).toFixed(DIGITS);
+        });
+    }
+}
+
 function init() {
     // Autocompletes
     $('select').select2({
@@ -128,10 +146,20 @@ function init() {
     }
 
     // Quantity handler
+    $('.box.quantity .content').append(
+        $('<label>').attr('for', 'quantity').text('Final item production rate (/min) :')
+    ).append(
+        $('<input>').attr('id', 'quantity').on('input', setfactor).val(factor)
+    );
+
+    setfactor(true);
 }
+
+const DIGITS = 3;
 
 var json = {};
 var dictionary = {};
+var factor = 1;
 
 $().ready(() => {
     init();
