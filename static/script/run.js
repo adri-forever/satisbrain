@@ -112,6 +112,10 @@ function setfactor(force) {
         $('.scalable').each(function() {
             this.innerText = (parseFloat(this.getAttribute('data-value')) * factor).toFixed(DIGITS);
         });
+        // Generated fixed numbers here too for fixed formatting
+        $('.fixed').each(function() {
+            this.innerText = (parseFloat(this.getAttribute('data-value'))).toFixed(DIGITS);
+        });
     }
 }
 

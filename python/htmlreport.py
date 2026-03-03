@@ -17,7 +17,6 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 # Constants
 DIGITS = 3
 
-
 def dict_getkey(di: dict[str, Any], val: Any):
     for k, v in di.items():
         if v == val:
@@ -53,7 +52,7 @@ def generate_recipe(a: airium.Airium, recipe_data: dict[str, Any], qty: int):
                 # rate = round(rate, DIGITS)
 
                 a.td(_t=prd_name)
-                a.td(klass='scalable', **{'data-value': rate})
+                a.td(klass='fixed', **{'data-value': rate})
                 a.td(klass='high scalable', **{'data-value': qty * rate})
                 if i == 0:
                     a.td(_t=machine)
@@ -69,7 +68,7 @@ def generate_recipe(a: airium.Airium, recipe_data: dict[str, Any], qty: int):
                 # rate = round(rate, DIGITS)
 
                 a.td(_t=ingr_name)
-                a.td(klass='scalable', **{'data-value': rate})
+                a.td(klass='fixed', **{'data-value': rate})
                 a.td(klass='high scalable', **{'data-value': qty * rate})
 
 
@@ -123,14 +122,12 @@ def generate_resources(a: airium.Airium, resources: dict, fltr: Literal['positiv
                 a.th(_t='Resource')
                 a.th(_t='Total (/min)')
             for resource, qty in pool.items():
-                qty = round(qty, DIGITS)
                 res_name = data.data_items[resource][0]['name']
                 with a.tr():
                     a.td(_t=res_name)
-                    a.td(_t='{:g}'.format(abs(qty)))
+                    a.td(klass='scalable', **{'data-value': qty})
     else:
         a.h3(_t='No leftover !', klass='high')
-
 
 def generate_machines(a: airium.Airium, production_plan: dict):
     machines = {}
@@ -306,35 +303,35 @@ def generate_table():
 
 
 @contextmanager
-def generate_box(a: airium.Airium, boxtype: str = '', item: str = '', recipe: str = '', title: str = '', edit: bool = False, collapsed: bool = False, qty: float = 1):
+def generate_box(a: airium.Airium, boxclass: str = '', item: str = '', recipe: str = '', title: str = '', edit: bool = False, collapsed: bool = False, qty: float = 1):
     title2: str = ""
 
     dropdownvalues: dict[str, str] = {"": "--"}
 
-    if boxtype in ["item", "recipe"]:
+    if boxclass in ["item", "recipe"]:
         if item in data.data_items:
             title = data.data_items[item][0]["name"]
-    if boxtype == "item":
+    if boxclass == "item":
         dropdownvalues = {key: value[0]['name']
                           for key, value in data.data_items.items()}
-    if boxtype == "recipe":
+    if boxclass == "recipe":
         title2 = data.data_recipes[recipe][0]["name"]
         dropdownvalues = {key: value[0]['name'] for key, value in data.data_recipes.items(
         ) if key in data.data_itemtorecipes[item]}
         dropdownvalues['baseresource'] = 'Set as base resource'
 
     # bypass - being an invalid name in python by using kwargs
-    with a.div(klass=f"box {boxtype} {"edit" if edit else ""} {"collapsed" if collapsed else ""}", **{"data-item": item}):
+    with a.div(klass=f"box {boxclass} {"edit" if edit else ""} {"collapsed" if collapsed else ""}", **{"data-item": item}):
         with a.div(klass="header"):
             with a.div(klass="left"):
                 a.button(klass="status")
                 a.div(klass="title1", _t=title)
                 a.div(klass="title2", _t=title2)
-                if boxtype in ["item", "recipe"]:
+                if boxclass in ["item", "recipe"]:
                     with a.div(klass="selector").select(id=uuid.uuid4()):
                         for key, value in dropdownvalues.items():
                             selection = {}
-                            if (boxtype == "item" and key == item) or (boxtype == "recipe" and key == recipe):
+                            if (boxclass == "item" and key == item) or (boxclass == "recipe" and key == recipe):
                                 selection["selected"] = "selected"
                             a.option(_t=value, value=key, **selection)
             with a.div(klass="right"):
@@ -342,10 +339,10 @@ def generate_box(a: airium.Airium, boxtype: str = '', item: str = '', recipe: st
                 a.button(klass="edit", onclick="toggleedit(this)")
                 a.button(klass="collapse", onclick="togglecollapse(this)")
         with a.div(klass="content"):
-            if (boxtype == "item" and item in data.data_items):
+            if (boxclass == "item" and item in data.data_items):
                 a.div(klass="itemdesc",
                       _t=data.data_items[item][0]['description'])
-            if (boxtype == "recipe" and recipe in data.data_recipes):
+            if (boxclass == "recipe" and recipe in data.data_recipes):
                 recipe_data = data.data_recipes[recipe][0]
                 generate_recipe(a, recipe_data, qty)
             yield
@@ -373,7 +370,7 @@ def generate_html_flask(production_plan: list[dict] = []) -> str:
 
     # item_name = data.data_items[target_item][0]['name']
 
-    with generate_box(a, '', '', '', 'Configuration'):
+    with generate_box(a, 'configuration', '', '', 'Configuration'):
         with generate_box(a, 'item', target_item, '', '', True, False):
             pass
 
@@ -383,26 +380,19 @@ def generate_html_flask(production_plan: list[dict] = []) -> str:
         with generate_box(a, 'quantity', '', '', 'Quantity', False, False):
             pass
 
-    with generate_box(a, '', '', '', 'Information'):
-        # base resource
+    with generate_box(a, 'information', '', '', 'Information'):
+        if len(production_plan) > 0:
+            with generate_box(a, '', '', '', 'Input quantities', False, False):
+                generate_resources(a, production_plan[-1]['itempool'], 'positive')
+            with generate_box(a, '', '', '', 'Extra resources', False, False):
+                generate_resources(a, production_plan[-1]['itempool'], 'negative')
+        
         # machines
-        # extra resource
-        pass
 
-    # with a.div(klass='row'):
-    # 	with a.div(klass='column'):
-    # 		a.h2(_t=f'Recipe: {get_recipe_title(data.data_recipes[target_recipe][0])}')
-    # 		generate_recipe(a, data.data_recipes[target_recipe][0], production_plan[1]['recipepool'][target_recipe])
-    # 	with a.div(klass='column'):
-    # 		a.h2(_t='Input')
-    # 		generate_resources(a, production_plan[-1]['itempool'], 'positive')
     # with a.div(klass='row'):
     # 	with a.div(klass='column'):
     # 		a.h2(_t='Machines & power')
     # 		generate_machines(a, production_plan)
-    # 	with a.div(klass='column'):
-    # 		a.h2(_t='Extra resources')
-    # 		generate_resources(a, production_plan[-1]['itempool'], 'negative')
     # a.button(type='button', klass='expndall', _t='Expand/Collapse all')
 
     # Expand all button: make button

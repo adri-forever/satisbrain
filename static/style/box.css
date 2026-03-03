@@ -1,5 +1,5 @@
 /* General */
-.box { box-sizing: border-box; display: inline-block; }
+.box { display: inline-block; }
 
 .box.tier { width: 100%; }
 
@@ -114,4 +114,9 @@
 .box.baseresource .resource button.delete::before {
 	content: "\e872";
 	margin: 0;
+}
+
+.box.configuration > .content > .box,
+.box.information > .content > .box{
+	max-width: 450px;
 }
