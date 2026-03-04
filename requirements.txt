@@ -8,5 +8,5 @@ flask
 airium
 
 #tkinter version
-ttkthemes
-tkinter-tooltip
+# ttkthemes
+# tkinter-tooltip
