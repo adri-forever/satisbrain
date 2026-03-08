@@ -1,5 +1,8 @@
 #brain
 numpy
+#brain debug
+matplotlib
+networkx
 
 #server version
 flask
