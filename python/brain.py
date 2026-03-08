@@ -266,8 +266,6 @@ class Node():
         """
         total: float = 1 # total is 1 if the node is start
         if self.type == "item":
-            # total = sum([v for k, v in self.parents.items() if k!=key]) - sum([v for k, v in self.children.items() if k!=key])
-
             total = sum(self.parents.values()) - sum(self.children.values())
             if key in self.parents:
                 total -= self.parents[key]
@@ -278,9 +276,6 @@ class Node():
             if not key:
                 raise ValueError('Cannot request total for recipe without giving the key item to decide quantity')
             recipe_data: dict[str] = data.data_recipes[self.id][0]
-
-            # totals: list[float] = [recipe_data['duration'] * amount / (60 * get_product_quantity(recipe_data, father)) for father, amount in self.parents.items()] # convert to item / min
-            # total = max(totals)
             total = recipe_data['duration'] * self.parents[key] / (60 * get_product_quantity(recipe_data, key))
 
         return float(total)
@@ -365,10 +360,6 @@ class Node():
 
         node.connectChild(self.id, amount) # create family
 
-        # What should be the condition to recompute an existing parent ?
-            # condition for item
-            # condition for recipe
-
     def createChildren(self, ancestry: list[str], father: str, recipe_data: dict[str, float] = {}):
         # --- ERROR AND DEBUGS ---
         message: str
@@ -446,6 +437,10 @@ class Node():
                         #   which self would likely not be, since item is only a byproduct in this case
                         #   so ?    recompute parents children.
                         #           to be tested of course
+
+                        # What should be the condition to recompute an existing parent ?
+                            # condition for item => irrelevant, in no case item creates its parent
+                            # condition for recipe => always ? the created parent will always(?) be byproduct relative to caller child, so caller child recipe will not be chosen to reevaluate needs
             elif DEBUG:
                 print(f'Needed amount for recipe {self.id} is non positive ({total})')
 
