@@ -1,5 +1,5 @@
 #brain
-numpy
+# numpy
 #brain debug
 matplotlib
 networkx
