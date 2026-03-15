@@ -1,4 +1,3 @@
-from python import data
 import airium
 import uuid
 import copy
@@ -13,6 +12,7 @@ import os
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # personal imports
+from python.brain import data, Graph, Node, EPSILON
 
 # Constants
 DIGITS = 3
@@ -97,20 +97,16 @@ def generate_tier_old(a: airium.Airium, tierno: int, tier: dict):
                             a, recipe_data, tier['recipepool'][recipe])
 
 
-def generate_resources(a: airium.Airium, resources: dict, fltr: Literal['positive', 'negative', 'all'] = 'all'):
+def generateResources(a: airium.Airium, resources: dict[str, float], fltr: Literal['positive', 'negative', 'all'] = 'all'):
     # Prevent modification outside
-    pool = copy.deepcopy(resources)
+    pool: dict[str, float] = copy.deepcopy(resources)
 
     # Remove 0 (according to precision) and filter according to fltr
     topop = []
     for resource, qty in pool.items():
-        pool[resource] = round(qty, DIGITS)
-        condition = ((not pool[resource])
-                     or (fltr == 'positive' and pool[resource] < 10**(-DIGITS))
-                     or (fltr == 'negative' and -pool[resource] < 10**(-DIGITS))
-                     )
-
-        if condition:
+        if (abs(qty) < EPSILON
+            or (fltr == 'positive' and qty < EPSILON)
+            or (fltr == 'negative' and -qty < EPSILON)):
             topop.append(resource)
 
     for resource in topop:
@@ -168,6 +164,8 @@ def generate_html(production_plan: dict, path: str):
     """
     watch out for variable power consumption machines
     """
+    style: str = ''
+    script: str = ''
     a = airium.Airium()
 
     target_item = list(production_plan[0]['itempool'].keys())[0]
@@ -195,7 +193,7 @@ def generate_html(production_plan: dict, path: str):
                         a, data.data_recipes[target_recipe][0], production_plan[1]['recipepool'][target_recipe])
                 with a.div(klass='column'):
                     a.h2(_t='Input')
-                    generate_resources(
+                    generateResources(
                         a, production_plan[-1]['itempool'], 'positive')
             with a.div(klass='row'):
                 with a.div(klass='column'):
@@ -203,7 +201,7 @@ def generate_html(production_plan: dict, path: str):
                     generate_machines(a, production_plan)
                 with a.div(klass='column'):
                     a.h2(_t='Extra resources')
-                    generate_resources(
+                    generateResources(
                         a, production_plan[-1]['itempool'], 'negative')
             a.h2(_t='Production steps')
             a.button(type='button', klass='expndall', _t='Expand/Collapse all')
@@ -247,8 +245,8 @@ def generate_box_nocont(a: airium.Airium, boxtype: str = '', item: str = '', rec
                             a.option(value=key, _t=value)
             with a.div(klass="right"):
                 a.button(klass="validate", onclick="validate(this)")
-                a.button(klass="edit", onclick="toggleedit(this)")
-                a.button(klass="collapse", onclick="togglecollapse(this)")
+                a.button(klass="edit", onclick="toggleEdit(this)")
+                a.button(klass="collapse", onclick="toggleCollapse(this)")
         with a.div(klass="content"):
             if isinstance(content, str):
                 a.text(content)
@@ -336,8 +334,8 @@ def generate_box(a: airium.Airium, boxclass: str = '', item: str = '', recipe: s
                             a.option(_t=value, value=key, **selection)
             with a.div(klass="right"):
                 a.button(klass="validate", onclick="validate(this)")
-                a.button(klass="edit", onclick="toggleedit(this)")
-                a.button(klass="collapse", onclick="togglecollapse(this)")
+                a.button(klass="edit", onclick="toggleEdit(this)")
+                a.button(klass="collapse", onclick="toggleCollapse(this)")
         with a.div(klass="content"):
             if (boxclass == "item" and item in data.data_items):
                 a.div(klass="itemdesc",
@@ -354,6 +352,16 @@ def generate_tier(a: airium.Airium, tier: dict, tierno: int) -> airium.Airium:
             for recipe in tier['recipepool']:
                 item = dict_getkey(tier['itemtorec'], recipe)
                 with generate_box(a, 'recipe', item, recipe, '', True, False, tier['recipepool'][recipe]):
+                    pass
+    return a
+
+def generateTier(a: airium.Airium, nodes: list[Node], tierno: int) -> airium.Airium:
+    with generate_box(a, 'tier', '', '', f'Stage {tierno}', False, False):
+        for node in nodes:
+            if node.type == 'item':
+                raise ValueError(f'Trying to generate recipe box for node {node.id} of type {node.type}')
+            for item in node.activeparents:
+                with generate_box(a, 'recipe', item, node.id, '', True, False, node.getRequired(item)):
                     pass
     return a
 
@@ -383,9 +391,9 @@ def generate_html_flask(production_plan: list[dict] = []) -> str:
     with generate_box(a, 'information', '', '', 'Information'):
         if len(production_plan) > 0:
             with generate_box(a, '', '', '', 'Input quantities', False, False):
-                generate_resources(a, production_plan[-1]['itempool'], 'positive')
+                generateResources(a, production_plan[-1]['itempool'], 'positive')
             with generate_box(a, '', '', '', 'Extra resources', False, False):
-                generate_resources(a, production_plan[-1]['itempool'], 'negative')
+                generateResources(a, production_plan[-1]['itempool'], 'negative')
         
         # machines
 
@@ -407,23 +415,69 @@ def generate_html_flask(production_plan: list[dict] = []) -> str:
 
     return str(a)
 
+def generateHtmlFlask(graph = Graph()) -> str:
+    a = airium.Airium()
+    
+    # early version: only 1 target allowed
+    target_item: str = ''
+    if graph.target:
+        target_item = graph.target['ingredients'][0]['item']
 
-try:
-    # Load style
-    with open('static\\style\\main.css', 'r') as stylefile:
-        style = stylefile.read()
-except FileNotFoundError:
-    print('Could not find style file. Produced report will be very ugly')
-    style = ''
+    with generate_box(a, 'configuration', '', '', 'Configuration'):
+        with generate_box(a, 'item', target_item, '', '', True, False):
+            pass
 
-try:
-    # Load script
-    with open('static\\script\\report_script.js', 'r') as scriptfile:
-        script = scriptfile.read()
-except FileNotFoundError:
-    print('Could not find script file. Deactivating style so produced report still works')
-    script = ''
-    style = ''
+        with generate_box(a, 'baseresource', '', '', 'Base resource handler', False, False):
+            pass
+
+        # with generate_box(a, 'quantity', '', '', 'Quantity', False, False):
+        #     pass
+
+    with generate_box(a, 'information', '', '', 'Information'):
+        with generate_box(a, '', '', '', 'Input quantities', False, False):
+            generateResources(a, graph.getBalance(), 'positive')
+        with generate_box(a, '', '', '', 'Extra resources', False, False):
+            generateResources(a, graph.getBalance(), 'negative')
+        
+        # machines
+
+    # with a.div(klass='row'):
+    # 	with a.div(klass='column'):
+    # 		a.h2(_t='Machines & power')
+    # 		generate_machines(a, production_plan)
+    # a.button(type='button', klass='expndall', _t='Expand/Collapse all')
+
+    # Expand all button: make button
+    # when clicked, get .box.tier.collapsed
+    # if any, remove collapsed from all .box.tier
+    # else add collapsed to all .box.tier (using toggleClass, a class wont be added twice)
+    # if shift is pressed, also target children .box of .box.tier
+
+    for i in range(2, graph.getDepth(), 2):
+        # depth 0 is start, depth 1 is start items, depth 2 is the first actual recipe
+        # last depth is items, so we only need to get to depth n-1
+        # depths alternate between items and recipes, so skip the item part
+        generateTier(a, graph.getNodes(i), int(i/2))
+
+    return str(a)
+
+
+# try:
+#     # Load style
+#     with open('static\\style\\main.css', 'r') as stylefile:
+#         style = stylefile.read()
+# except FileNotFoundError:
+#     print('Could not find style file. Produced report will be very ugly')
+#     style = ''
+
+# try:
+#     # Load script
+#     with open('static\\script\\report_script.js', 'r') as scriptfile:
+#         script = scriptfile.read()
+# except FileNotFoundError:
+#     print('Could not find script file. Deactivating style so produced report still works')
+#     script = ''
+#     style = ''
 
 if __name__ == "__main__":
     print('testing box "with" generation')

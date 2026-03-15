@@ -530,7 +530,7 @@ class RecipePicker(ttk.Frame):
         if item in self.computingframe.recipes:
             default = self.computingframe.recipes[item]
         else:
-            default = brain.select_recipe(item)
+            default = brain.selectRecipe(item)
 
         self.recipe_box = ttk.Combobox(
             self.header, values=self.recipelist, state='readonly')

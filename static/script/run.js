@@ -1,8 +1,8 @@
-function toggleedit(that) {
+function toggleEdit(that) {
     $(that).closest('.box')[0].classList.toggle('edit')
 }
 
-function togglecollapse(that) {
+function toggleCollapse(that) {
     $(that).closest('.box')[0].classList.toggle('collapsed')
 }
 
@@ -33,12 +33,16 @@ async function send() {
     }
 }
 
-function validateitem(box) {
+
+function validateItem(box) {
     // console.log('item:', json);
-    json["item"] = box.find('.selector select').val();
+    var obj = {}
+    var item = box.find('.selector select').val()
+    obj[item] = 1
+    json["target"] = obj;
 }
 
-function validaterecipe(box) {
+function validateRecipe(box) {
     // console.log('recipe:', json);
     let item = box.attr('data-item');
     let value = box.find('.selector select').val();
@@ -55,7 +59,7 @@ function validaterecipe(box) {
     }
 }
 
-function removebaseresource(that) {
+function removeBaseresource(that) {
     // console.log('baseresource:', json)
     let item = $(that).closest('.resource').attr('data-item');
     let index = -1;
@@ -74,12 +78,12 @@ function validate(that) {
 
     if (classes.contains("item")) {
         console.log('validating item')
-        validateitem(box);
+        validateItem(box);
     } else if (classes.contains("recipe")) {
-        validaterecipe(box);
+        validateRecipe(box);
         console.log('validating recipe')
     }  else if (classes.contains("baseresource")) {
-        removebaseresource(that);
+        removeBaseresource(that);
         console.log('removing base resource')
     } else {
         console.log('Could not validate box with classes ' + Array.from(classes).join(', '))
@@ -88,7 +92,7 @@ function validate(that) {
     send();
 }
 
-function get_baseresource_entry(item) {
+function getBaseresourceEntry(item) {
     entry = $('<div>').addClass('resource').attr('data-item', item.item).append(
         $('<span>').text(item.name)
     ).append(
@@ -97,7 +101,7 @@ function get_baseresource_entry(item) {
     return entry
 }
 
-function setfactor(force) {
+function setFactor(force) {
     var _factor = parseFloat($('#quantity').val());
 
     console.log('_factor', _factor);
@@ -145,7 +149,7 @@ function init() {
 
         // create entries
         for (let i=0; i<sorted.length; i++) {
-            $('.box.baseresource .content').append(get_baseresource_entry(sorted[i]));
+            $('.box.baseresource .content').append(getBaseresourceEntry(sorted[i]));
         }
     }
 
@@ -153,10 +157,10 @@ function init() {
     $('.box.quantity .content').append(
         $('<label>').attr('for', 'quantity').text('Final item production rate (/min) :')
     ).append(
-        $('<input>').attr('id', 'quantity').on('input', setfactor).val(factor)
+        $('<input>').attr('id', 'quantity').on('input', setFactor).val(factor)
     );
 
-    setfactor(true);
+    setFactor(true);
 }
 
 const DIGITS = 3;
