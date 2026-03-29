@@ -1,38 +1,22 @@
-import copy, os, sys, time
+import copy, os, sys#, time
 from typing import Literal
 from pathlib import Path
-import networkx as nx
-import matplotlib.pyplot as plt
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # personal imports
-from python import data
-from python import utils
+from python import data#, utils
 
 # Constants
+MAIN: bool = __name__ == '__main__'
 DEBUG: bool = False
 ERROR_ON_WARNING: bool = True
 MAX_ITER: int = 40  # Prevent infinite looping
 EPSILON: float = 1e-6
 
-"""
-the ultimate test for this tool will be:
-successfuly produce a plan for fuel using diluted packaged fuel
-=> fuel (unpackage: packaged fuel)
-=> packaged fuel (diluted fuel: packaged water + heavy oil residue)
-=> packaged water (package: water) + heavy oil residue (heavy oil residue: oil)
-=> input: water, oil, canisters (0/min)
-=> extra: polymer resin
-
-inputs you should give:
-    alternates: packaged diluted fuel, heavy oil residue
-    
-    
-    
-Trucs a fixer: dans les recettes 'principales' n'utiliser que les recettes dont l'item est le premier output:
-NE PAS ESSAYER DE FABRIQUER DE LACIDE SULFURIQUE AVEC DES URANIUM CELL ????? Ca se fait avec du SULFUR et de LEAU merde
-"""
+if MAIN:
+    import networkx as nx
+    import matplotlib.pyplot as plt
 
 ### Functions ###
 
@@ -94,145 +78,6 @@ def getProductQuantity(recipe_data: dict, item: str) -> float:
     
     return qty
 
-def alter_itempool(itempool: dict[str, float], recipe_data: dict, machine_qty: float, key: Literal['products', 'ingredients'] | None = None):
-    # Apply the effects of a recipe on the current itempool (substract the products, add the ingredients)
-    # Must be used once as
-    if key is None:
-        itempool = alter_itempool(
-            itempool, recipe_data, machine_qty, 'products')
-        itempool = alter_itempool(
-            itempool, recipe_data, machine_qty, 'ingredients')
-    else:
-        for product in recipe_data[key]:
-            product_item = product['item']
-            product_qty = 60 * machine_qty * \
-                product['amount'] / recipe_data['duration']
-
-            if product_item not in itempool:
-                itempool[product_item] = 0
-            if key == 'products':
-                product_qty *= -1
-            itempool[product_item] += product_qty
-
-    return itempool
-
-
-def get_production_plan(target_item: str, base_resources: set[str], recipes: dict[str, str] = {}, qty: float = 1.) -> tuple[dict]:
-    # Contains steps
-    production_plan = []
-    production_plan.append({'itempool': {target_item: qty}})
-
-    if qty <= 0:
-        print('Cannot produce negative amount of items. Let us make 1 of these per minute')
-        qty = 1
-
-    itempool: dict[str, float]
-    left_items: list[str]
-    for i in range(1, MAX_ITER):  # change to while once we got the condition
-        # Make room for current tier
-
-        itempool = copy.deepcopy(production_plan[i-1]['itempool'])
-        # next_itempool: dict[str: float] = copy.deepcopy(itempool) # questionable
-        # on certain occasions, not separating the pools this will compress a recipe to one tier higher than it shoulde be
-        # However, separating the pools may cause some error when a single recipe has a byproduct
-
-        # how to handle the 1 tier up situation:
-        # if the item you are currently treating is child of other items in the tier,
-        # skip to compute on next tie
-        #
-        # do that during tier building or during plan refinement ?
-        # the advantage of doing that during tier building is that we have left_items to refer to
-
-        # List all items to produce in said tier
-        left_items = [item_ for item_, qty_ in itempool.items()
-                      if qty_ > EPSILON and item_ not in base_resources]
-
-        if not left_items:
-            # if no items are left to craft, exit loop (and dont make a next tier)
-            break
-
-        production_plan.append(
-            {'itempool': {}, 'recipepool': {}, 'itemtorec': {}})
-
-        for item in left_items:
-            if item in recipes:
-                recipe = recipes[item]
-            else:
-                recipe = selectRecipe(item)
-                # this way any recipe that was not chosen is added to the dict
-                recipes[item] = recipe
-
-            if not recipe:
-                base_resources.add(item)
-                print(f'No available recipe for {data.data_items[item][0]['name']}. It has been added to base resources')
-                continue
-
-            production_plan[i]['itemtorec'][item] = recipe
-
-            recipe_data = data.data_recipes[recipe][0]
-
-            # decide number of machines for recipe: divide asked quantity by recipe rate (/min)
-            machine_qty = itempool[item] / (60 * getProductQuantity(recipe_data, item) / recipe_data['duration'])
-
-            # Alter recipe pool
-            production_plan[i]['recipepool'][recipe] = machine_qty
-
-            # Apply changes from recipe usage to item pool
-            itempool = alter_itempool(itempool, recipe_data, machine_qty)
-
-        if i == MAX_ITER-1:
-            print(f'WARNING: Max recipe iterations reached. Looping may have occured.')
-
-        # Remove items with quantity 0
-        empty_items = [item_ for item_, qty_ in itempool.items() if abs(
-            qty_) < EPSILON]  # Ignore items with too low of a quantity
-        for empty_item in empty_items:
-            itempool.pop(empty_item)
-
-        production_plan[i]['itempool'] = itempool
-
-    # Refine plan: concatenate recipes that appear several times to lowest tier
-    for item, recipe in recipes.items():
-        # Find all tiers where recipe appear
-        tiers_recipe: list[int] = []
-        recipetotal = 0
-        for i, tier in enumerate(production_plan):
-            # Count recipe qty
-            if 'recipepool' in tier:
-                if recipe in tier['recipepool']:
-                    tiers_recipe.append(i)
-                    recipetotal += tier['recipepool'][recipe]
-
-        # Find all tiers where the item should appears (from the tier it is needed to the tier it is fulfilled)
-        tiers_item: list[int] = []
-        for i, tier in enumerate(production_plan):
-            if 'itempool' in tier:
-                if item in tier['itempool']:
-                    tiers_item.append(i)
-
-        # Push recipe down lowest
-        if len(tiers_recipe) > 1:
-            for i in tiers_recipe:
-                production_plan[i]['recipepool'].pop(recipe)
-                if item in production_plan[i]['itemtorec']: # item may not be in itemtorec if the recipe has the item as byproduct and has not been chosen for this purpose
-                    production_plan[i]['itemtorec'].pop(item)
-            production_plan[tiers_recipe[-1]]['recipepool'][recipe] = recipetotal
-            production_plan[tiers_recipe[-1]]['itemtorec'][item] = recipe
-
-        # Propagate item quantities
-        itemtotal = 0
-        if len(tiers_item) > 1:
-            # do not touch the last tier where it appears
-            for i in range(len(tiers_item)-1):
-                plan = production_plan[i]
-                if item not in plan['itempool']:
-                    plan['itempool'][item] = 0
-                plan['itempool'][item] += itemtotal
-                itemtotal = plan['itempool'][item]
-
-    return production_plan, recipes, base_resources
-
-# --------------- V2 ---------------------
 def createCustomRecipe(items: dict[str, float]) -> dict[str]:
     recipe_data: dict[str, list[dict[str]]] = {"ingredients": [], "products": [], "duration": 60}
 
@@ -246,12 +91,12 @@ class Node():
     Graph node
     """
     id: str                         # name of the node
-    depth: int                      # distance from top. guides order of execution
+    depth: int                      # distance from top. guides display
     type: Literal["recipe", "item"]
     children: dict[str, float]      # lists all children nodes and the item quantities
     parents: dict[str, float]       # lists all parent nodes and the item quantities
     activeparents: dict[str, float] # lists all parent nodes requesting this recipe and the recipe quantities
-    graph: "Graph" 
+    graph: "Graph"                  # keep reference to parent
 
     def __init__(self, id: str, depth: float, type: Literal["recipe", "item"]):
         # initialize here otherwise all nodes point to the same object
@@ -290,7 +135,7 @@ class Node():
             key allows to exclude a part of the children/parents
             result is given in items/min
         RECIPE:
-            key is the item for which this recipe has been chosen
+            key is the item for which this recipe has been chosen (unused ?)
             as such, the requested key quantity decides of the recipe amount
             result is given in number of machines
         """
@@ -727,7 +572,7 @@ class Graph():
         return flat
 
     def show(self, block: bool = False):
-        if __name__!='__main__':
+        if not MAIN:
             return
         plt.clf()
 
@@ -786,19 +631,7 @@ class Graph():
                 nodes.append(node)
         return nodes
 
-def example_run_old():
-    production_plan, recipes = get_production_plan(
-        'Desc_NuclearFuelRod_C', data.data_baseresources)
-    # data.pretty_dict_print(production_plan)
-    print(production_plan)
-
-    path = 'output\\test.html'
-    if not os.path.exists('output'):
-        os.mkdir('output')
-    # htmlreport.generate_html(production_plan, path)
-    # webbrowser.open(path)
-
-def example_run(debug: bool = True):
+def testRun(debug: bool = True):
     global DEBUG
     DEBUG = debug
 
@@ -809,21 +642,25 @@ def example_run(debug: bool = True):
 
     graph = Graph(target)
 
-    start = time.time()
+    # start = time.time()
     graph.compute()
-    end = time.time()
+    # end = time.time()
     # graph.alterRecipe('Desc_ModularFrame_C', 'Recipe_Alternate_ModularFrame_C') # place recipe change here
 
-    end2 = time.time()
+    # end2 = time.time()
     
-    print('Execution time: %s s'%(end-start))
-    print('Recompute time: %s s'%(end2-end))
-    print('Total time: %s s'%(end2-start))
+    # print('Execution time: %s s'%(end-start))
+    # print('Recompute time: %s s'%(end2-end))
+    # print('Total time: %s s'%(end2-start))
     print('Travail terminé')
-    utils.pretty_dict_print(graph.flatten())
+    print(graph.flatten())
     graph.show(True)
 
-def computevsrecompute():
+def computeVsRecompute():
+    """
+    function to compare computing vs recomputing
+    plans should be exactly the same, apart for the order of nodes
+    """
     import json
     
     target: dict[str] = {"Desc_ModularFrame_C": 10}
@@ -841,27 +678,6 @@ def computevsrecompute():
     with open('output\\graph2.json', 'w') as f:
         json.dump(graph2.flatten(), f)
 
-
-
 ### Main code ###
-if __name__ == '__main__':
-    # example_run()
-    # import json
-
-    # payloadstr = """
-    #     {"item": "Desc_AluminumIngot_C", "recipes": {"Desc_AluminaSolution_C": "Recipe_AluminaSolution_C", "Desc_AluminumIngot_C": "Recipe_IngotAluminum_C", "Desc_AluminumScrap_C": "Recipe_AluminumScrap_C", "Desc_Silica_C": "Recipe_Silica_C"}, "baseresource": ["Desc_Silica_C"]}
-    # """
-    # payload = json.loads(payloadstr)
-    # item = payload['item']
-    # recipes = payload['recipes']
-    # baseresource = set(payload['baseresource'])
-
-    # production_plan: dict
-    # production_plan, recipes = get_production_plan(
-    #     item, baseresource, recipes, 100)
-    
-    # print(production_plan)
-
-    example_run()
-
-    # computevsrecompute()
+if MAIN:
+    testRun()

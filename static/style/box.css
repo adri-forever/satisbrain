@@ -3,15 +3,18 @@
 
 .box.tier { width: 100%; }
 
-.box .content {
+.box > .content {
 	border: 1px dashed var(--gray5);
 	border-top-width: 0;
 	padding: 5px;
 	overflow: hidden;
 
 	display: flex;
-	gap: 20px;
 	flex-wrap: wrap;
+}
+
+.box.container > .content {
+	gap: 20px;
 }
 
 /* Header */
@@ -38,17 +41,10 @@
 
 .box > .header > .left, .box > .header > .right { display: flex; gap: 1rem; }
 
-/* Header buttons */
-.box > .header button { display: none; aspect-ratio: 1; padding: 0; min-width: 1.75rem; }
-.box > .header button::before { margin: 0; }
-
-.box > .header button.validate::before { content: "\e5ca"; } /* Check */
-.box > .header button.edit::before { content: "\e3c9"; } /* Pen */
-.box.edit > .header button.edit::before { content: "\e5cd"; } /* Cross */
-.box > .header button.status.wip::before { content: "\e726"; } /* Cog */
-.box > .header button.status.done::before { content: "\e5ca"; } /* Check */
-.box > .header button.collapse::before { content: "\e5c5"; } /* Down arrow */
-.box.collapsed > .header button.collapse::before { content: "\e5df"; } /* Right arrow when collapsed */
+/* Buttons */
+.box > .header button { display: none; }
+.box button { aspect-ratio: 1; padding: 0; min-width: 1.75rem; }
+.box button::before { margin: 0; }
 
 .box.item > .header button.status,
 .box.recipe > .header button.status,
@@ -85,6 +81,29 @@
 .box.edit > .header .selector, .box.edit > .header .selector select { display: unset; } /* Show dropdown in edit mode*/
 .box.item.edit > .header .title1,
 .box.recipe.edit > .header .title2 { display: none; } /* Hide first title for item, hide second for recipe */
+
+/* Multi item input */
+.box.item_multi > .content {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.box.item_multi > .content > .item {
+	display: flex;
+	flex-direction: row;
+	gap: 5px;
+}
+.box.item_multi > .content > .item input.amount { margin-left: auto; width: 75px; }
+
+.box.item_multi > .content > .buttons {
+	display: flex;
+	flex-direction: row-reverse;
+	gap: 5px
+}
+
+.box.item_multi > .content span.small { margin-top: auto; }
+.box.item_multi > .content input.amount { text-align: right; }
 
 /* Base resource box */
 .box.baseresource .content {

@@ -2,8 +2,4 @@ tables: refaire les contours (enlever celui du tour de la table ?)
 
 reinstate machine display
 
-dans un tier, shift click ne collapse pas juste le tier mais aussi tout ce qu'il y a dedans (et inversement)
-
 savegarder des presets (target item, recipes) (copier coller un json / uploader un json) (+ bouton d export)
-
-statut: pas seulement oui non mais nouveau, demarre, termine

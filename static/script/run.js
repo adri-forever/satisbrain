@@ -2,12 +2,35 @@ function toggleEdit(that) {
     $(that).closest('.box')[0].classList.toggle('edit')
 }
 
-function toggleCollapse(that) {
-    $(that).closest('.box')[0].classList.toggle('collapsed')
+function toggleCollapse(that, event) {
+    let collapsed = $(that).closest('.box').hasClass('collapsed');
+
+    $(that).closest('.box').toggleClass('collapsed', !collapsed);
+    if (event.shiftKey) { // if shift is pressed, also toggle child boxes
+        $(that).closest('.box').find('.box').toggleClass('collapsed', !collapsed);
+    }
+}
+
+function toggleAll(that, event) {
+    let collapsed = $('.box.tier').hasClass('collapsed');
+    let targetselector = '.box.tier';
+    if (event.shiftKey) { targetselector += ', .box.tier .box'; }
+
+    $(targetselector).toggleClass('collapsed', !collapsed);
+}
+
+function changeStatus(that) {
+    let classorder = ['', 'wip', 'done'];
+    let classes = that.classList;
+    let i = 0;
+    if (classes.contains('wip')) { i = 1; }
+    if (classes.contains('done')) { i = 2; }
+
+    $(that).removeClass(classorder[i]).addClass(classorder[(i+1)%classorder.length]);
 }
 
 async function send() {
-    console.log('send:', json);
+    if (DEBUG) {console.log('send:', json);}
     let response = await fetch('/send', {
         method: 'post',
         headers: {'Content-Type': 'application/json'},
@@ -15,7 +38,7 @@ async function send() {
     });
 
     let result = await response.json();
-    console.log(result);
+    if (DEBUG) {console.log(result);}
 
     if (result.hasOwnProperty("recipes")) {
         json["recipes"] = result["recipes"];
@@ -26,24 +49,42 @@ async function send() {
     if (result.hasOwnProperty("dictionary")) {
         dictionary = result["dictionary"];
     }
+    if (result.hasOwnProperty("target")) {
+        target = {};
+        if (result["target"].hasOwnProperty("ingredients"))
+            for (let i=0; i<result["target"]["ingredients"].length; i++) {
+                target[result["target"]["ingredients"][i]["item"]] = result["target"]["ingredients"][i]["amount"];
+            }
+    }
     if (result.hasOwnProperty("html")) {
         // replace content with built html
         $('body .content')[0].innerHTML = result["html"];
         init(); //initialize page modules
     }
+    
+    DEBUG = result.DEBUG === 'true';
 }
 
-
-function validateItem(box) {
-    // console.log('item:', json);
-    var obj = {}
-    var item = box.find('.selector select').val()
-    obj[item] = 1
+function validateItemLegacy(box) {
+    var obj = {};
+    var item = box.find('.selector select').val();
+    obj[item] = 1;
     json["target"] = obj;
 }
 
+function validateItem(box) {
+    var target = {};
+    box.find('div.item').each(function(index) {
+        var item = $(this).find('select').val();
+        var amount = parseFloat($(this).find('input.amount').val());
+
+        if (!target.hasOwnProperty(item)) { target[item] = 0; }
+        if (amount) { target[item] += amount; }
+    });
+    json["target"] = target;
+}
+
 function validateRecipe(box) {
-    // console.log('recipe:', json);
     let item = box.attr('data-item');
     let value = box.find('.selector select').val();
     if (value == 'baseresource') {
@@ -60,7 +101,6 @@ function validateRecipe(box) {
 }
 
 function removeBaseresource(that) {
-    // console.log('baseresource:', json)
     let item = $(that).closest('.resource').attr('data-item');
     let index = -1;
 
@@ -77,14 +117,17 @@ function validate(that) {
     let classes = box[0].classList;
 
     if (classes.contains("item")) {
-        console.log('validating item')
+        if (DEBUG) {console.log('validating item')}
+        validateItemLegacy(box);
+    } else if (classes.contains("item_multi")) {
+        if (DEBUG) {console.log('validating items')}
         validateItem(box);
     } else if (classes.contains("recipe")) {
+        if (DEBUG) {console.log('validating recipe')}
         validateRecipe(box);
-        console.log('validating recipe')
     }  else if (classes.contains("baseresource")) {
+        if (DEBUG) {console.log('removing base resource')}
         removeBaseresource(that);
-        console.log('removing base resource')
     } else {
         console.log('Could not validate box with classes ' + Array.from(classes).join(', '))
     }
@@ -98,20 +141,18 @@ function getBaseresourceEntry(item) {
     ).append(
         $('<button>').addClass('delete').attr('onclick', 'validate(this)')
     )
-    return entry
+    return entry;
 }
 
 function setFactor(force) {
     var _factor = parseFloat($('#quantity').val());
 
-    console.log('_factor', _factor);
+    if (DEBUG) {console.log('_factor', _factor);}
 
     var update = !isNaN(_factor) && factor!=_factor;
-    if (update) {
-        factor = _factor;
-    }
+    if (update) { factor = _factor; }
     if (update || force) {
-        console.log('factor', factor)
+        if (DEBUG) {console.log('factor', factor);}
 
         $('.scalable').each(function() {
             this.innerText = (parseFloat(this.getAttribute('data-value')) * factor).toFixed(DIGITS);
@@ -123,16 +164,93 @@ function setFactor(force) {
     }
 }
 
-function init() {
-    // Autocompletes
-    $('select').select2({
+function initSelect2() {
+    $('div.selector > select').select2({
         dropdownAutoWidth : true,
         width: 'auto'
     });
+}
 
-    // Base resource handler
+function removeItem(that) {
+    let box = $(that).closest('.box'); // Take closest box before deleting item (caller will cease to exist)
+    $(that).closest('div.item').remove();
+    validate(box);
+}
+
+function inputValidationKey(event) {
+    const reg = /^[0-9]+$/;
+    let prevent = false;
+
+    if (DEBUG) { console.log("(keypress) Key: "+event.key+"\nCurrent value: "+event.target.value);}
+
+    if (event.key === '.') {
+        prevent = event.target.value.includes('.'); // prevent from setting several dots
+    } else {
+        prevent = !reg.test(event.key);
+    }
+
+    if (prevent) { event.preventDefault(); }
+}
+
+function inputValidationWhole(event) {
+    const regwhole = /^[0-9]*\.?[0-9]*$/;
+    const regmatch = /([0-9]*\.?[0-9]*)/;
+    let matches;
+
+    if (DEBUG) { console.log("(keyup) Key: "+event.key+"\nCurrent value: "+event.target.value); }
+
+    if (!regwhole.test(event.target.value)) {
+        matches = event.target.value.match(regmatch) ?? [];
+        $(event.target).val(matches.length > 0 ? matches[0] : "");
+    }
+
+    if (event.key === 'Enter') {
+        validate(event.target);
+    }
+}
+
+function addItem(that, item, amount, init) {
+    let boxid = crypto.randomUUID();
+
+    $('<div>').addClass('item').attr('id', boxid).append(
+        $('<div>').addClass('selector').append(
+            $('.box.item_multi .template select').clone().attr('id', crypto.randomUUID())
+        )
+    ).append(
+        $('<input>').addClass('amount').attr('id', crypto.randomUUID()).attr('pattern', '[0-9]+\\.?[0-9]+')//.attr('type', 'number')
+    ).append(
+        $('<span>').addClass('small').text('/min')
+    ).append(
+        $('<button>').addClass('delete').attr('onclick', 'removeItem(this)')
+    ).insertBefore(
+        $('.box.item_multi > .content .buttons')
+    );
+
+    if (item) {
+        $('#'+boxid+' select option[value='+item+']').attr('selected', 'selected');
+    }
+    if (amount) {
+        $('#'+boxid+' input.amount').val(amount);
+    }
+
+    $('#'+boxid+' input.amount').on('keypress', inputValidationKey).on('keyup', inputValidationWhole);
+
+    if (init) { initSelect2(); }
+}
+
+function initItemInput() {
+    if (Object.keys(target).length > 0) {
+        for (const [item, amount] of Object.entries(target)) {
+            addItem(this, item, amount, false);
+        }
+    } else {
+        addItem(this, null, null, false);
+    }
+}   
+
+function initBaseResource() {
     if (json['baseresource']) {
-        let items = [];
+        let items = []; 
         let itemname;
 
         // get translation for all items
@@ -152,19 +270,25 @@ function init() {
             $('.box.baseresource .content').append(getBaseresourceEntry(sorted[i]));
         }
     }
+}
 
-    // Quantity handler
-    $('.box.quantity .content').append(
-        $('<label>').attr('for', 'quantity').text('Final item production rate (/min) :')
-    ).append(
-        $('<input>').attr('id', 'quantity').on('input', setFactor).val(factor)
-    );
+function init() {
+    // Item inputs
+    initItemInput();
 
-    setFactor(true);
+    // Autocompletes
+    initSelect2(); 
+
+    // Base resource handler
+    initBaseResource();
+
+    setFactor(true); // to delete next ?
 }
 
 const DIGITS = 3;
+var DEBUG = false;
 
+var target = {};
 var json = {};
 var dictionary = {};
 var factor = 1;

@@ -1,28 +1,12 @@
-import airium
-import uuid
-import copy
-import math
-import sys
+import airium, uuid, copy, sys, os, webbrowser
 from typing import Literal, Any
 from pathlib import Path
 from contextlib import contextmanager
-import webbrowser
-import os
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # personal imports
 from python.brain import data, Graph, Node, EPSILON
-
-# Constants
-DIGITS = 3
-
-def dict_getkey(di: dict[str, Any], val: Any):
-    for k, v in di.items():
-        if v == val:
-            return k
-    return None
-
 
 def generate_recipe(a: airium.Airium, recipe_data: dict[str, Any], qty: int):
 
@@ -71,234 +55,88 @@ def generate_recipe(a: airium.Airium, recipe_data: dict[str, Any], qty: int):
                 a.td(klass='fixed', **{'data-value': rate})
                 a.td(klass='high scalable', **{'data-value': qty * rate})
 
-
-def get_recipe_title(recipe_data: dict) -> str:
-    return f'{recipe_data['name']}{' (alternate)' if recipe_data['alternate'] else ''}'
-
-
-def generate_tier_old(a: airium.Airium, tierno: int, tier: dict):
-    """
-    add recipe name in tab and if alternate or not
-    """
-    a.button(type='button', klass='collapsible', _t=f'Stage {tierno}')
-    with a.div(klass='collapsiblecontent'):
-        if 'recipepool' in tier:
-            with a.div(klass='tiercontainer'):
-                for recipe in tier['recipepool']:
-                    recipe_data = data.data_recipes[recipe][0]
-                    with a.div(klass='tierbox'):
-                        # Custom checkbox
-                        with a.label(klass='recipe_checkbox'):
-                            # Generate UUID for each checkbox (localStorage state)
-                            a.input(type='checkbox', id=str(uuid.uuid1()))
-                            a.span(klass='checkmark')
-                            a.h3(_t=get_recipe_title(recipe_data))
-                        generate_recipe(
-                            a, recipe_data, tier['recipepool'][recipe])
-
-
 def generateResources(a: airium.Airium, resources: dict[str, float], fltr: Literal['positive', 'negative', 'all'] = 'all'):
-    # Prevent modification outside
-    pool: dict[str, float] = copy.deepcopy(resources)
-
-    # Remove 0 (according to precision) and filter according to fltr
-    topop = []
-    for resource, qty in pool.items():
-        if (abs(qty) < EPSILON
-            or (fltr == 'positive' and qty < EPSILON)
-            or (fltr == 'negative' and -qty < EPSILON)):
-            topop.append(resource)
-
-    for resource in topop:
-        pool.pop(resource)
+    # filter the resources to display
+    pool: dict[str, float] = {}
+    for item, amount in resources.items():
+        if fltr == 'positive':
+            if amount > EPSILON:
+                pool[item] = amount
+        elif fltr == 'negative':
+            if -amount > EPSILON:
+                pool[item] = -amount # show amounts as positive if only negative are wanted
+        else:
+            if abs(amount) > EPSILON:
+                pool[item] = amount
 
     if pool:
         with a.table():
             with a.tr():
                 a.th(_t='Resource')
                 a.th(_t='Total (/min)')
-            for resource, qty in pool.items():
-                res_name = data.data_items[resource][0]['name']
+            for item, amount in pool.items():
+                res_name = data.data_items[item][0]['name']
                 with a.tr():
                     a.td(_t=res_name)
-                    a.td(klass='scalable', **{'data-value': qty})
-    else:
-        a.h3(_t='No leftover !', klass='high')
+                    a.td(klass='scalable', **{'data-value': amount})
+    elif fltr == 'negative':
+        a.span(_t='No leftover !', klass='high')
 
-def generate_machines(a: airium.Airium, production_plan: dict):
-    machines = {}
-    for tier in production_plan:
-        if 'recipepool' in tier:
-            for recipe, qty in tier['recipepool'].items():
-                recipe_data = data.data_recipes[recipe][0]
-                machine = recipe_data['producedIn'][0]
-                if machine not in machines:
-                    machines[machine] = 0
-                machines[machine] += qty
+def generateMachines(a: airium.Airium, graph: Graph):
+    machines: list[str] = []
+    names: list[str] = []
+    amounts: list[float] = []
+    powers: list[float] = []
+    id: str
+    node: Node
+    producedIn: list[str]
+    machine: str
+    i: int
+    machine_data: dict[str]
+    recipe_data: dict[str]
+    power: float
+    for id, node in graph.nodes.items():
+        if node.type == 'recipe':
+            machine = ""
+            if id in data.data_recipes:
+                recipe_data = data.data_recipes[id][0]
+                producedIn = recipe_data['producedIn']
+                if len(producedIn) > 0:
+                    machine = producedIn[0]
+            
+                if machine:
+                    machine_data = data.data_buildings[machine][0]
+                    
+                    if machine not in machines:
+                        machines.append(machine)
+                        amounts.append(0)
+                        powers.append(0)
+                        names.append(machine_data['name'])
+                    i = machines.index(machine)
+                    amounts[i] += node.getRequired()
 
-    totalpower = 0
+                    if machine == 'Desc_HadronCollider_C':
+                        power = (recipe_data["minPower"] + recipe_data["maxPower"])/2
+                    else:
+                        power = machine_data['powerUsage']
+                    powers[i] += power*amounts[i]
+
     if machines:
         with a.table():
             with a.tr():
                 a.th(_t='Machine')
                 a.th(_t='Quantity')
                 a.th(_t='Estimated power (MW)')
-            for machine, qty in machines.items():
-                machine_data = data.data_buildings[machine][0]
-                name = machine_data['name']
-                power = round(qty * machine_data['powerUsage'], DIGITS)
-                totalpower += power
-                qty = round(qty, DIGITS)
+            for i in range(len(machines)):
                 with a.tr():
-                    a.td(_t=name)
-                    a.td(_t='{:g}'.format(qty))
-                    a.td(_t='{:g}'.format(power))
+                    a.td(_t=names[i])
+                    a.td(klass='scalable', **{"data-value": amounts[i]})
+                    a.td(klass='scalable', **{"data-value": powers[i]})
             with a.tr():
                 a.td(_t='Total')
                 a.td(_t='')
-                a.td(_t='{:g}'.format(totalpower))
-    a.p(_t='Resource extraction ignored. Variable power buildings not computed')
-
-
-def generate_html(production_plan: dict, path: str):
-    """
-    watch out for variable power consumption machines
-    """
-    style: str = ''
-    script: str = ''
-    a = airium.Airium()
-
-    target_item = list(production_plan[0]['itempool'].keys())[0]
-    target_recipe = list(production_plan[1]['recipepool'].keys())[0]
-    target_quantity = production_plan[0]['itempool'][target_item]
-    target_quantity = '{:g}'.format(round(target_quantity, DIGITS))
-
-    item_name = data.data_items[target_item][0]['name']
-
-    a('<!DOCTYPE html>')
-    with a.html(lang='en'):
-        with a.head():
-            a.meta(content='width=device-width, initial-scale=1',
-                   name='viewport', charset='utf-8')
-            a.title(_t=f'Satisbrain: {item_name}')
-            with a.style():
-                a(style)
-        with a.body():
-            a.h1(_t=f'Production plan: {target_quantity} {item_name} per min')
-            with a.div(klass='row'):
-                with a.div(klass='column'):
-                    a.h2(
-                        _t=f'Recipe: {get_recipe_title(data.data_recipes[target_recipe][0])}')
-                    generate_recipe(
-                        a, data.data_recipes[target_recipe][0], production_plan[1]['recipepool'][target_recipe])
-                with a.div(klass='column'):
-                    a.h2(_t='Input')
-                    generateResources(
-                        a, production_plan[-1]['itempool'], 'positive')
-            with a.div(klass='row'):
-                with a.div(klass='column'):
-                    a.h2(_t='Machines & power')
-                    generate_machines(a, production_plan)
-                with a.div(klass='column'):
-                    a.h2(_t='Extra resources')
-                    generateResources(
-                        a, production_plan[-1]['itempool'], 'negative')
-            a.h2(_t='Production steps')
-            a.button(type='button', klass='expndall', _t='Expand/Collapse all')
-            for i in range(0, len(production_plan)-2):
-                # Offset by 2 because first tier only has target item and second only has target recipe
-                generate_tier_old(a, i+1, production_plan[i+2])
-        with a.script():
-            a(script)
-
-    html = str(a).encode('utf-8')
-    with open(path, 'wb') as f:
-        f.write(html)
-
-
-def generate_box_nocont(a: airium.Airium, boxtype: str = '', item: str = '', recipe: str = '', title: str = '', content: str = '', edit: bool = False, collapsed: bool = False):
-    title2: str = ""
-
-    dropdownvalues: dict[str, str] = {"": "--"}
-
-    if boxtype in ["item", "recipe"]:
-        if item in data.data_items:
-            title = data.data_items[item][0]["name"]
-    if boxtype == "item":
-        dropdownvalues = {key: value[0]['name']
-                          for key, value in data.data_items}
-    if boxtype == "recipe":
-        title2 = data.data_recipes[recipe][0]["name"]
-        dropdownvalues = {key: value[0]['name'] for key,
-                          value in data.data_recipes if key in data.data_itemtorecipes[item]}
-
-    # bypass - being an invalid name in python by using kwargs
-    with a.div(klass=f"box {boxtype} {"edit" if edit else ""} {"collapsed" if collapsed else ""}", **{"data-item": item}):
-        with a.div(klass="header"):
-            with a.div(klass="left"):
-                a.button(klass="status")
-                a.div(klass="title1", _t=title)
-                a.div(klass="title2", _t=title2)
-                if boxtype in ["item", "recipe"]:
-                    with a.div(klass="selector").select(id=uuid.uuid4()):
-                        for key, value in dropdownvalues.items():
-                            a.option(value=key, _t=value)
-            with a.div(klass="right"):
-                a.button(klass="validate", onclick="validate(this)")
-                a.button(klass="edit", onclick="toggleEdit(this)")
-                a.button(klass="collapse", onclick="toggleCollapse(this)")
-        with a.div(klass="content"):
-            if isinstance(content, str):
-                a.text(content)
-            if isinstance(content, dict):
-                pass
-            else:
-                print(
-                    f"Could not interpret content of box with title {title}. Type {type(content)}")
-
-
-def generate_table():
-    """
-    <table class="checkbox_altered">
-      <tbody><tr>
-        <td></td>
-        <th>Rate (/min)</th>
-        <th>Total (/min)</th>
-        <th>Produced in</th>
-        <th>Amount</th>
-      </tr>
-      <tr>
-        <th>Products</th>
-      </tr>
-      <tr>
-        <td>Aluminum Ingot</td>
-        <td>60</td>
-        <td class="high">1.02</td>
-        <td>Foundry</td>
-        <td>0.017</td>
-      </tr>
-      <tr>
-        <th>Ingredients</th>
-      </tr>
-      <tr>
-        <td>Aluminum Scrap</td>
-        <td>90</td>
-        <td class="high">1.53</td>
-      </tr>
-      <tr>
-        <td>Silica</td>
-        <td>75</td>
-        <td class="high">1.275</td>
-      </tr>
-    </tbody></table>
-    """
-    """
-    passer une matrice de données à afficher
-    passer une recette génère le tableau
-    """
-
-    pass
-
+                a.td(klass='scalable', **{"data-value": sum(powers)})
+    a.span(_t='Resource extraction is not taken into account. Overclocking machines will result in much higher power usage.', klass='light')
 
 @contextmanager
 def generate_box(a: airium.Airium, boxclass: str = '', item: str = '', recipe: str = '', title: str = '', edit: bool = False, collapsed: bool = False, qty: float = 1):
@@ -319,10 +157,10 @@ def generate_box(a: airium.Airium, boxclass: str = '', item: str = '', recipe: s
         dropdownvalues['baseresource'] = 'Set as base resource'
 
     # bypass - being an invalid name in python by using kwargs
-    with a.div(klass=f"box {boxclass} {"edit" if edit else ""} {"collapsed" if collapsed else ""}", **{"data-item": item}):
+    with a.div(klass=f"box {boxclass}{" edit" if edit else ""}{" collapsed" if collapsed else ""}", **{"data-item": item}):
         with a.div(klass="header"):
             with a.div(klass="left"):
-                a.button(klass="status")
+                a.button(klass="status", onclick="changeStatus(this)")
                 a.div(klass="title1", _t=title)
                 a.div(klass="title2", _t=title2)
                 if boxclass in ["item", "recipe"]:
@@ -335,7 +173,7 @@ def generate_box(a: airium.Airium, boxclass: str = '', item: str = '', recipe: s
             with a.div(klass="right"):
                 a.button(klass="validate", onclick="validate(this)")
                 a.button(klass="edit", onclick="toggleEdit(this)")
-                a.button(klass="collapse", onclick="toggleCollapse(this)")
+                a.button(klass="collapse", onclick="toggleCollapse(this, event)")
         with a.div(klass="content"):
             if (boxclass == "item" and item in data.data_items):
                 a.div(klass="itemdesc",
@@ -345,18 +183,8 @@ def generate_box(a: airium.Airium, boxclass: str = '', item: str = '', recipe: s
                 generate_recipe(a, recipe_data, qty)
             yield
 
-
-def generate_tier(a: airium.Airium, tier: dict, tierno: int) -> airium.Airium:
-    with generate_box(a, 'tier', '', '', f'Stage {tierno}', False, False):
-        if 'recipepool' in tier:
-            for recipe in tier['recipepool']:
-                item = dict_getkey(tier['itemtorec'], recipe)
-                with generate_box(a, 'recipe', item, recipe, '', True, False, tier['recipepool'][recipe]):
-                    pass
-    return a
-
 def generateTier(a: airium.Airium, nodes: list[Node], tierno: int) -> airium.Airium:
-    with generate_box(a, 'tier', '', '', f'Stage {tierno}', False, False):
+    with generate_box(a, 'tier container', '', '', f'Stage {tierno}', False, False):
         for node in nodes:
             if node.type == 'item':
                 raise ValueError(f'Trying to generate recipe box for node {node.id} of type {node.type}')
@@ -365,93 +193,30 @@ def generateTier(a: airium.Airium, nodes: list[Node], tierno: int) -> airium.Air
                     pass
     return a
 
-
-def generate_html_flask(production_plan: list[dict] = []) -> str:
-    a = airium.Airium()
-
-    target_item = ''
-    if len(production_plan) > 0:
-        target_item = list(production_plan[0]['itempool'].keys())[0]
-    # target_recipe = list(production_plan[1]['recipepool'].keys())[0]
-    # target_quantity = production_plan[0]['itempool'][target_item]
-    # target_quantity = '{:g}'.format(round(target_quantity, DIGITS))
-
-    # item_name = data.data_items[target_item][0]['name']
-
-    with generate_box(a, 'configuration', '', '', 'Configuration'):
-        with generate_box(a, 'item', target_item, '', '', True, False):
-            pass
-
-        with generate_box(a, 'baseresource', '', '', 'Base resource handler', False, False):
-            pass
-
-        with generate_box(a, 'quantity', '', '', 'Quantity', False, False):
-            pass
-
-    with generate_box(a, 'information', '', '', 'Information'):
-        if len(production_plan) > 0:
-            with generate_box(a, '', '', '', 'Input quantities', False, False):
-                generateResources(a, production_plan[-1]['itempool'], 'positive')
-            with generate_box(a, '', '', '', 'Extra resources', False, False):
-                generateResources(a, production_plan[-1]['itempool'], 'negative')
-        
-        # machines
-
-    # with a.div(klass='row'):
-    # 	with a.div(klass='column'):
-    # 		a.h2(_t='Machines & power')
-    # 		generate_machines(a, production_plan)
-    # a.button(type='button', klass='expndall', _t='Expand/Collapse all')
-
-    # Expand all button: make button
-    # when clicked, get .box.tier.collapsed
-    # if any, remove collapsed from all .box.tier
-    # else add collapsed to all .box.tier (using toggleClass, a class wont be added twice)
-    # if shift is pressed, also target children .box of .box.tier
-
-    for i in range(1, len(production_plan)):
-        # Offset by 1 because first tier only has target item
-        generate_tier(a, production_plan[i], i)
-
-    return str(a)
-
 def generateHtmlFlask(graph = Graph()) -> str:
     a = airium.Airium()
-    
-    # early version: only 1 target allowed
-    target_item: str = ''
-    if graph.target:
-        target_item = graph.target['ingredients'][0]['item']
 
-    with generate_box(a, 'configuration', '', '', 'Configuration'):
-        with generate_box(a, 'item', target_item, '', '', True, False):
-            pass
-
+    with generate_box(a, 'configuration container', '', '', 'Configuration'):
+        with generate_box(a, 'item_multi', '', '', 'Item inputs', False, False):
+            with a.div(klass="template hidden"):
+                with a.select(id=uuid.uuid4()):
+                    for key, value in data.data_items.items():
+                        a.option(_t=value[0]['name'], value=key)
+            with a.div(klass='buttons'):
+                a.button(klass="validate", onclick="validate(this)")
+                a.button(klass="add", onclick="addItem(this, null, null, true)")
         with generate_box(a, 'baseresource', '', '', 'Base resource handler', False, False):
             pass
 
-        # with generate_box(a, 'quantity', '', '', 'Quantity', False, False):
-        #     pass
-
-    with generate_box(a, 'information', '', '', 'Information'):
+    with generate_box(a, 'information container', '', '', 'Information'):
         with generate_box(a, '', '', '', 'Input quantities', False, False):
             generateResources(a, graph.getBalance(), 'positive')
         with generate_box(a, '', '', '', 'Extra resources', False, False):
             generateResources(a, graph.getBalance(), 'negative')
-        
-        # machines
+        with generate_box(a, '', '', '', 'Machines', False, False):
+            generateMachines(a, graph)
 
-    # with a.div(klass='row'):
-    # 	with a.div(klass='column'):
-    # 		a.h2(_t='Machines & power')
-    # 		generate_machines(a, production_plan)
-    # a.button(type='button', klass='expndall', _t='Expand/Collapse all')
-
-    # Expand all button: make button
-    # when clicked, get .box.tier.collapsed
-    # if any, remove collapsed from all .box.tier
-    # else add collapsed to all .box.tier (using toggleClass, a class wont be added twice)
-    # if shift is pressed, also target children .box of .box.tier
+    a.button(_t='Expand/Collapse all', klass='collapseall', onclick='toggleAll(this, event)')
 
     for i in range(2, graph.getDepth(), 2):
         # depth 0 is start, depth 1 is start items, depth 2 is the first actual recipe
@@ -461,33 +226,5 @@ def generateHtmlFlask(graph = Graph()) -> str:
 
     return str(a)
 
-
-# try:
-#     # Load style
-#     with open('static\\style\\main.css', 'r') as stylefile:
-#         style = stylefile.read()
-# except FileNotFoundError:
-#     print('Could not find style file. Produced report will be very ugly')
-#     style = ''
-
-# try:
-#     # Load script
-#     with open('static\\script\\report_script.js', 'r') as scriptfile:
-#         script = scriptfile.read()
-# except FileNotFoundError:
-#     print('Could not find script file. Deactivating style so produced report still works')
-#     script = ''
-#     style = ''
-
 if __name__ == "__main__":
-    print('testing box "with" generation')
-
-    prodplan = [{'itempool': {'Desc_AluminumIngot_C': 1.0, 'Desc_Silica_C': 0}}, {'itempool': {'Desc_AluminumScrap_C': 1.5, 'Desc_Silica_C': 1.25}, 'recipepool': {'Recipe_IngotAluminum_C': 0.016666666666666666}, 'itemtorec': {'Desc_AluminumIngot_C': 'Recipe_IngotAluminum_C'}}, {'itempool': {'Desc_Water_C': -0.5, 'Desc_AluminaSolution_C': 1.0, 'Desc_Coal_C': 0.5, 'Desc_RawQuartz_C': 0.75}, 'recipepool': {'Recipe_AluminumScrap_C': 0.004166666666666667,
-                                                                                                                                                                                                                                                                                                                                                                                                                       'Recipe_Silica_C': 0.03333333333333333}, 'itemtorec': {'Desc_AluminumScrap_C': 'Recipe_AluminumScrap_C', 'Desc_Silica_C': 'Recipe_Silica_C'}}, {'itempool': {'Desc_Water_C': 1.0, 'Desc_Coal_C': 0.5, 'Desc_RawQuartz_C': 0.75, 'Desc_Silica_C': -0.4166666666666667, 'Desc_OreBauxite_C': 1.0}, 'recipepool': {'Recipe_AluminaSolution_C': 0.008333333333333333}, 'itemtorec': {'Desc_AluminaSolution_C': 'Recipe_AluminaSolution_C'}}]
-    html = generate_html_flask(prodplan)
-
-    tstrep = 'testreport.html'
-    with open(tstrep, 'w') as f:
-        f.write(html)
-    webbrowser.open(os.getcwd()+'\\'+tstrep)
-    print('travail terminé')
+    print("No main executable code in this module")
