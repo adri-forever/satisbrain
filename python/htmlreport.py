@@ -1,4 +1,10 @@
-import airium, uuid, copy, sys, os, webbrowser
+from python.brain import data, Graph, Node, EPSILON
+import airium
+import uuid
+import copy
+import sys
+import os
+import webbrowser
 from typing import Literal, Any
 from pathlib import Path
 from contextlib import contextmanager
@@ -6,7 +12,7 @@ from contextlib import contextmanager
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # personal imports
-from python.brain import data, Graph, Node, EPSILON
+
 
 def generate_recipe(a: airium.Airium, recipe_data: dict[str, Any], qty: int):
 
@@ -55,6 +61,7 @@ def generate_recipe(a: airium.Airium, recipe_data: dict[str, Any], qty: int):
                 a.td(klass='fixed', **{'data-value': rate})
                 a.td(klass='high scalable', **{'data-value': qty * rate})
 
+
 def generateResources(a: airium.Airium, resources: dict[str, float], fltr: Literal['positive', 'negative', 'all'] = 'all'):
     # filter the resources to display
     pool: dict[str, float] = {}
@@ -64,7 +71,8 @@ def generateResources(a: airium.Airium, resources: dict[str, float], fltr: Liter
                 pool[item] = amount
         elif fltr == 'negative':
             if -amount > EPSILON:
-                pool[item] = -amount # show amounts as positive if only negative are wanted
+                # show amounts as positive if only negative are wanted
+                pool[item] = -amount
         else:
             if abs(amount) > EPSILON:
                 pool[item] = amount
@@ -81,6 +89,7 @@ def generateResources(a: airium.Airium, resources: dict[str, float], fltr: Liter
                     a.td(klass='scalable', **{'data-value': amount})
     elif fltr == 'negative':
         a.span(_t='No leftover !', klass='high')
+
 
 def generateMachines(a: airium.Airium, graph: Graph):
     machines: list[str] = []
@@ -103,10 +112,10 @@ def generateMachines(a: airium.Airium, graph: Graph):
                 producedIn = recipe_data['producedIn']
                 if len(producedIn) > 0:
                     machine = producedIn[0]
-            
+
                 if machine:
                     machine_data = data.data_buildings[machine][0]
-                    
+
                     if machine not in machines:
                         machines.append(machine)
                         amounts.append(0)
@@ -116,7 +125,8 @@ def generateMachines(a: airium.Airium, graph: Graph):
                     amounts[i] += node.getRequired()
 
                     if machine == 'Desc_HadronCollider_C':
-                        power = (recipe_data["minPower"] + recipe_data["maxPower"])/2
+                        power = (recipe_data["minPower"] +
+                                 recipe_data["maxPower"])/2
                     else:
                         power = machine_data['powerUsage']
                     powers[i] += power*amounts[i]
@@ -137,6 +147,7 @@ def generateMachines(a: airium.Airium, graph: Graph):
                 a.td(_t='')
                 a.td(klass='scalable', **{"data-value": sum(powers)})
     a.span(_t='Resource extraction is not taken into account. Overclocking machines will result in much higher power usage.', klass='light')
+
 
 @contextmanager
 def generate_box(a: airium.Airium, boxclass: str = '', item: str = '', recipe: str = '', title: str = '', edit: bool = False, collapsed: bool = False, qty: float = 1):
@@ -173,7 +184,8 @@ def generate_box(a: airium.Airium, boxclass: str = '', item: str = '', recipe: s
             with a.div(klass="right"):
                 a.button(klass="validate", onclick="validate(this)")
                 a.button(klass="edit", onclick="toggleEdit(this)")
-                a.button(klass="collapse", onclick="toggleCollapse(this, event)")
+                a.button(klass="collapse",
+                         onclick="toggleCollapse(this, event)")
         with a.div(klass="content"):
             if (boxclass == "item" and item in data.data_items):
                 a.div(klass="itemdesc",
@@ -183,17 +195,20 @@ def generate_box(a: airium.Airium, boxclass: str = '', item: str = '', recipe: s
                 generate_recipe(a, recipe_data, qty)
             yield
 
+
 def generateTier(a: airium.Airium, nodes: list[Node], tierno: int) -> airium.Airium:
     with generate_box(a, 'tier container', '', '', f'Stage {tierno}', False, False):
         for node in nodes:
             if node.type == 'item':
-                raise ValueError(f'Trying to generate recipe box for node {node.id} of type {node.type}')
+                raise ValueError(
+                    f'Trying to generate recipe box for node {node.id} of type {node.type}')
             for item in node.activeparents:
                 with generate_box(a, 'recipe', item, node.id, '', True, False, node.getRequired(item)):
                     pass
     return a
 
-def generateHtmlFlask(graph = Graph()) -> str:
+
+def generateHtmlFlask(graph=Graph()) -> str:
     a = airium.Airium()
 
     with generate_box(a, 'configuration container', '', '', 'Configuration'):
@@ -207,6 +222,11 @@ def generateHtmlFlask(graph = Graph()) -> str:
                 a.button(klass="add", onclick="addItem(this, null, null, true)")
         with generate_box(a, 'baseresource', '', '', 'Base resource handler', False, False):
             pass
+        with a.div(klass='loads'):
+            a.button(klass='export', onclick='exportPlan(this)', _t='Export')
+            a.input(klass='import', id=uuid.uuid4(),
+                    type='file', accept="application/json", onchange="onImport(event)", autocomplete="off")
+            a.button(klass='import', onclick='showUpload()', _t='Import')
 
     with generate_box(a, 'information container', '', '', 'Information'):
         with generate_box(a, '', '', '', 'Input quantities', False, False):
@@ -216,7 +236,8 @@ def generateHtmlFlask(graph = Graph()) -> str:
         with generate_box(a, '', '', '', 'Machines', False, False):
             generateMachines(a, graph)
 
-    a.button(_t='Expand/Collapse all', klass='collapseall', onclick='toggleAll(this, event)')
+    a.button(_t='Expand/Collapse all', klass='collapseall',
+             onclick='toggleAll(this, event)')
 
     for i in range(2, graph.getDepth(), 2):
         # depth 0 is start, depth 1 is start items, depth 2 is the first actual recipe
@@ -225,6 +246,7 @@ def generateHtmlFlask(graph = Graph()) -> str:
         generateTier(a, graph.getNodes(i), int(i/2))
 
     return str(a)
+
 
 if __name__ == "__main__":
     print("No main executable code in this module")

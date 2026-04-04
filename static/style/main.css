@@ -131,6 +131,8 @@ button.status.wip::before { content: "\e726"; } /* Cog */
 button.status.done::before { content: "\e5ca"; } /* Check */
 button.collapse::before { content: "\e5c5"; } /* Down arrow */
 .collapsed button.collapse::before { content: "\e5df"; } /* Right arrow when collapsed */
+button.import::before { content: "\f09b"; } /* upload */
+button.export::before { content: "\f090"; } /* download */
 
 .collapseall {
 	display: block;
@@ -140,4 +142,19 @@ button.collapse::before { content: "\e5c5"; } /* Down arrow */
 	background: var(--gray5);
 	font-weight: bold;
 	font-size: 16px;
+}
+
+/* Import export buttons */
+input.import { display: none; }
+.loads {
+	display: flex;
+	flex-direction: column;
+	gap: 5px; }
+div.loads button {
+	aspect-ratio: unset;
+	padding: 2px 5px 2px;
+}
+div.loads button::before {
+	margin-right: 5px;
+	baseline-shift: -5px;
 }

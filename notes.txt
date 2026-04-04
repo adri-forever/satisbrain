@@ -1,5 +1,5 @@
-tables: refaire les contours (enlever celui du tour de la table ?)
+Fonctions:
+    plusieurs onglets ? Plans parallèles
 
-reinstate machine display
-
-savegarder des presets (target item, recipes) (copier coller un json / uploader un json) (+ bouton d export)
+Style:
+    tables: refaire les contours (enlever celui du tour de la table ?)

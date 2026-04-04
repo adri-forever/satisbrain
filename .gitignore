@@ -1,5 +1,6 @@
 # Personal
 output/*
+settings.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

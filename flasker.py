@@ -1,19 +1,26 @@
-import flask, json
+import flask
+import json
+from pathlib import Path as pPath
+from os import path as ospath
 from python import htmlreport, brain
 
-DEBUG = True
+DEBUG = False
 
 app = flask.Flask(__name__)
 
+
 def fillDictionary(baseresource: set):
-    dictionary = {"items": {item: brain.data.data_items[item][0]["name"] for item in baseresource}}
+    dictionary = {"items": {
+        item: brain.data.data_items[item][0]["name"] for item in baseresource}}
 
     return dictionary
+
 
 @app.route('/')
 def index():
     # return flask.render_template('index.html', landing=htmlreport.generate_html_flask([]))
     return flask.render_template('index.html', landing=htmlreport.generateHtmlFlask())
+
 
 @app.route('/send', methods=['POST'])
 def send():
@@ -39,14 +46,15 @@ def send():
 
     productionPlan: dict
 
-    graph = brain.Graph(target=target, baseresource=baseresource, recipes=recipes)
+    graph = brain.Graph(
+        target=target, baseresource=baseresource, recipes=recipes)
     graph.compute()
     productionPlan = graph.flatten()
 
     if DEBUG:
         print("\n\tOutput plan: ")
         print(productionPlan)
-    
+
     productionPlan['dictionary'] = fillDictionary(graph.baseresource)
 
     # this is where the render of the plan happens
@@ -55,9 +63,23 @@ def send():
 
 
 if __name__ == "__main__":
-    print(f"{__file__} is main")
+    settingpath = pPath(__file__).parent / "settings.json"
+    if ospath.exists(settingpath):
+        with open(settingpath, 'r') as f:
+            settings = json.load(f)
+    else:
+        defaultpath = pPath(__file__).parent / "defaultsettings.json"
+        settings = {"DEBUG": False}
+        if ospath.exists(defaultpath):
+            with open(defaultpath, 'r') as f:
+                settings = json.load(f)
+        with open(settingpath, "w") as f:
+            json.dump(settings, f, indent=4)
+    if 'DEBUG' in settings:
+        DEBUG = settings["DEBUG"]
 
     if DEBUG:
+        print(f"{__file__} is main")
         brain.DEBUG = True
 
     app.run(host="0.0.0.0", debug=DEBUG, port=8080)

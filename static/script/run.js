@@ -29,15 +29,55 @@ function changeStatus(that) {
     $(that).removeClass(classorder[i]).addClass(classorder[(i+1)%classorder.length]);
 }
 
-async function send() {
-    if (DEBUG) {console.log('send:', json);}
+function exportPlan() {
+    let elmnt = document.createElement('a');
+    elmnt.download = 'plan.json';
+    elmnt.href = `data:application/json;charset=utf-8,${JSON.stringify(json)}`;
+    elmnt.click();
+}
+
+function onImport(e) {
+    var files = e.target.files;
+    if (!files.length) {
+        if (DEBUG) {
+            console.log('No file selected!');
+        }
+        return;
+    }
+    var reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            imported = JSON.parse(event.target.result);
+            if (DEBUG) {
+                console.log('Import:');
+                console.log(imported);
+            }
+            send(imported);
+        } catch (error) {
+            alert(error);
+        }
+    };
+    reader.readAsText(files[0]);
+}
+
+function showUpload(that) {
+    $('input.import')[0].click();
+}
+
+// function importPlan() {
+//     send(imported);
+// }
+
+async function send(payload) {
+    if (DEBUG) {console.log('send:', payload);}
     let response = await fetch('/send', {
         method: 'post',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(json)
+        body: JSON.stringify(payload)
     });
 
     let result = await response.json();
+    DEBUG = result.DEBUG === 'true';
     if (DEBUG) {console.log(result);}
 
     if (result.hasOwnProperty("recipes")) {
@@ -61,8 +101,6 @@ async function send() {
         $('body .content')[0].innerHTML = result["html"];
         init(); //initialize page modules
     }
-    
-    DEBUG = result.DEBUG === 'true';
 }
 
 function validateItemLegacy(box) {
@@ -132,7 +170,7 @@ function validate(that) {
         console.log('Could not validate box with classes ' + Array.from(classes).join(', '))
     }
 
-    send();
+    send(json);
 }
 
 function getBaseresourceEntry(item) {
@@ -288,6 +326,7 @@ function init() {
 const DIGITS = 3;
 var DEBUG = false;
 
+var imported = {};
 var target = {};
 var json = {};
 var dictionary = {};

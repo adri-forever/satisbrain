@@ -1,11 +1,13 @@
-import copy, os, sys#, time
+from python import data  # , utils
+import copy
+import os
+import sys  # , time
 from typing import Literal
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # personal imports
-from python import data#, utils
 
 # Constants
 MAIN: bool = __name__ == '__main__'
@@ -19,6 +21,7 @@ if MAIN:
     import matplotlib.pyplot as plt
 
 ### Functions ###
+
 
 def selectRecipe(item: str, alternates: Literal['favor', 'forbid', 'unfavor', 'indifferent'] = 'unfavor') -> str:
     recipe: str = ''
@@ -39,7 +42,7 @@ def selectRecipe(item: str, alternates: Literal['favor', 'forbid', 'unfavor', 'i
         altscore = 3
     elif alternates == 'indifferent':
         altscore = 0
-    
+
     for i in range(len(recipes)):
         rec = recipes[i]
         score = 0
@@ -49,7 +52,7 @@ def selectRecipe(item: str, alternates: Literal['favor', 'forbid', 'unfavor', 'i
         if not data.data_recipes[rec][0]['alternate']:  # if default recipe
             score += altscore
         else:
-            if alternates=='forbid':
+            if alternates == 'forbid':
                 continue
         # if packaging/unpackaging
         if data.data_recipes[rec][0]['producedIn'][0] == 'Desc_Packager_C':
@@ -63,8 +66,9 @@ def selectRecipe(item: str, alternates: Literal['favor', 'forbid', 'unfavor', 'i
         print(f'No recipe found for item {data.data_items[item][0]['name']}')
     return recipe
 
+
 def getProductQuantity(recipe_data: dict, item: str) -> float:
-    # for multi product recipes, find the produced quantity of desired 
+    # for multi product recipes, find the produced quantity of desired
 
     qty: float = -1
 
@@ -72,19 +76,23 @@ def getProductQuantity(recipe_data: dict, item: str) -> float:
         if product['item'] == item:
             qty = product['amount']
             break
-    
-    if qty<0:
-        raise ValueError(f'Could not find product {item} in recipe {recipe_data['className']}')
-    
+
+    if qty < 0:
+        raise ValueError(
+            f'Could not find product {item} in recipe {recipe_data['className']}')
+
     return qty
 
+
 def createCustomRecipe(items: dict[str, float]) -> dict[str]:
-    recipe_data: dict[str, list[dict[str]]] = {"ingredients": [], "products": [], "duration": 60}
+    recipe_data: dict[str, list[dict[str]]] = {
+        "ingredients": [], "products": [], "duration": 60}
 
     for item, amount in items.items():
         recipe_data["ingredients"].append({"item": item, "amount": amount})
 
     return recipe_data
+
 
 class Node():
     """
@@ -93,9 +101,12 @@ class Node():
     id: str                         # name of the node
     depth: int                      # distance from top. guides display
     type: Literal["recipe", "item"]
-    children: dict[str, float]      # lists all children nodes and the item quantities
-    parents: dict[str, float]       # lists all parent nodes and the item quantities
-    activeparents: dict[str, float] # lists all parent nodes requesting this recipe and the recipe quantities
+    # lists all children nodes and the item quantities
+    children: dict[str, float]
+    # lists all parent nodes and the item quantities
+    parents: dict[str, float]
+    # lists all parent nodes requesting this recipe and the recipe quantities
+    activeparents: dict[str, float]
     graph: "Graph"                  # keep reference to parent
 
     def __init__(self, id: str, depth: float, type: Literal["recipe", "item"]):
@@ -124,7 +135,7 @@ class Node():
                 # is this wrong ?
                 # try to think about a case where you would actually need to remove an item from here
                 # you can delete a recipe, and then the item is recomputed using createChidren so all should be fine
-                orphaned = len(self.children)==0 and len(self.parents)==0
+                orphaned = len(self.children) == 0 and len(self.parents) == 0
         return orphaned
 
     def getRequired(self, key: str = '') -> float:
@@ -148,25 +159,27 @@ class Node():
                 total += self.children[key]
         else:
             if key and key not in self.activeparents:
-                raise ValueError(f'Item {key} is not in recipe {self.id} active parents')
+                raise ValueError(
+                    f'Item {key} is not in recipe {self.id} active parents')
             if key:
                 total = self.activeparents[key]
             else:
                 total = sum(self.activeparents.values())
 
-
         return float(total)
-    
+
     def updateDepth(self):
         """
         items, in terms of availability, should be the deepest possible (its there as soon as its needed)
         on the other hand, recipes should come at the shallowest position (just before the deepest of its parents)
         """
         parentdepths: list[int]
-        if self.type=='item':
-            parentdepths = [node.depth for id, node in self.graph.nodes.items() if id in self.parents]
+        if self.type == 'item':
+            parentdepths = [node.depth for id,
+                            node in self.graph.nodes.items() if id in self.parents]
         else:
-            parentdepths = [node.depth for id, node in self.graph.nodes.items() if id in self.activeparents]
+            parentdepths = [
+                node.depth for id, node in self.graph.nodes.items() if id in self.activeparents]
         # newdepth: int
 
         if len(parentdepths) > 0:
@@ -179,7 +192,7 @@ class Node():
             # self.depth = newdepth+1
         else:
             self.depth = 0
-    
+
     def updateDepthAndChildren(self, ancestry: list[str] = []):
         """
         Is this going to loop or am I smart as fuck ?
@@ -219,7 +232,7 @@ class Node():
             self.children.pop(child)
             node.parents.pop(self.id)
 
-        if active and self.type=='item':
+        if active and self.type == 'item':
             if recamount > 0:
                 # indicate to recipe the reason for which its been created
                 node.activeparents[self.id] = recamount
@@ -235,50 +248,56 @@ class Node():
         newnode: bool = id not in self.graph.nodes
         nonpos: bool = itemamount < EPSILON
 
-        debugamount: float = itemamount if type=='item' else recamount
+        debugamount: float = itemamount if type == 'item' else recamount
 
         if newnode and nonpos:
             # if node doesnt exist and requested negative quantity, do nothing
             if DEBUG:
-                print(f'Needed child amount of {id} for node {self.id} is non positive ({debugamount})')
+                print(
+                    f'Needed child amount of {id} for node {self.id} is non positive ({debugamount})')
             return
         elif newnode:
             # new node positive
             if DEBUG:
-                print(f'Creating node {id}, child of {self.id} (amount {debugamount})')
-            node = Node(id, self.depth+1, type) # create node
-            self.graph.addNode(node) # add it to graph
+                print(
+                    f'Creating node {id}, child of {self.id} (amount {debugamount})')
+            node = Node(id, self.depth+1, type)  # create node
+            self.graph.addNode(node)  # add it to graph
         elif nonpos:
             pass
             # connectChild will handle the removal of active parents for recipe
         else:
             if DEBUG:
-                print(f'Found node {id} to be child of {self.id} (amount {debugamount})')
+                print(
+                    f'Found node {id} to be child of {self.id} (amount {debugamount})')
             node = self.graph.nodes[id]
-        
-        self.connectChild(id, itemamount, recamount, True) # update family
+
+        self.connectChild(id, itemamount, recamount, True)  # update family
         if not nonpos:
-            node.createChildren(ancestry) # update its children (recurse)
+            node.createChildren(ancestry)  # update its children (recurse)
         # if the recipe is negative, dont create its children
         # item quantity cannot be negativ
 
     def createParent(self, type: Literal["recipe", "item"], id: str, amount: float, ancestry: list[str] = []):
         node: Node
         newnode: bool = id not in self.graph.nodes
-        if type=='recipe':
+        if type == 'recipe':
             raise ValueError('Item cannot create its parent recipe')
         if newnode:
             if DEBUG:
-                print(f'Creating node {id}, parent of {self.id} (amount {amount})')
-            node = Node(id, 0, type) # create node
-            self.graph.addNode(node) # add it to graph
+                print(
+                    f'Creating node {id}, parent of {self.id} (amount {amount})')
+            node = Node(id, 0, type)  # create node
+            self.graph.addNode(node)  # add it to graph
         else:
             if DEBUG:
-                print(f'Found node {id} to be parent of {self.id} (amount {amount})')
+                print(
+                    f'Found node {id} to be parent of {self.id} (amount {amount})')
             node = self.graph.nodes[id]
 
-        node.connectChild(self.id, amount, 0, False) # create family
-        node.createChildren(ancestry) # children can be created without worry - if you are creating the parent, it means the created parent is byproduct of the current recipe, hence will not loop back to this recipe to be created
+        node.connectChild(self.id, amount, 0, False)  # create family
+        # children can be created without worry - if you are creating the parent, it means the created parent is byproduct of the current recipe, hence will not loop back to this recipe to be created
+        node.createChildren(ancestry)
 
     def createChildren(self, ancestry: list[str]):
         father: str = ''
@@ -289,17 +308,20 @@ class Node():
         if (self.id in ancestry):
             index: int = ancestry.index(self.id)
             looped: list[str] = ancestry[index:]
-            
-            print(f'Family tree is looping for nodes {', '.join(looped)}. Resetting active recipes and recomputing node')
-            
+
+            print(
+                f'Family tree is looping for nodes {', '.join(looped)}. Resetting active recipes and recomputing node')
+
             for id in looped:
                 # reset all active recipes for problematic items
-                if self.graph.nodes[id].type=='item' and id in self.graph.recipes:
+                if self.graph.nodes[id].type == 'item' and id in self.graph.recipes:
                     self.graph.recipes.pop(id)
-            
-            self.graph.nodes[looped[0]].connectChild(looped[1], 0, 0, True) # Looping will be detected on an item. sever its recipe
-            self.graph.nodes[looped[0]].createChildren(ancestry[:index]) # recompute item
-            
+
+            # Looping will be detected on an item. sever its recipe
+            self.graph.nodes[looped[0]].connectChild(looped[1], 0, 0, True)
+            self.graph.nodes[looped[0]].createChildren(
+                ancestry[:index])  # recompute item
+
             # return
 
         if len(ancestry) == MAX_ITER-1:
@@ -313,47 +335,55 @@ class Node():
         if DEBUG:
             self.graph.show()
 
-            print(f'Evaluating children for node {self.id} ({self.type}), called from node {father}')
+            print(
+                f'Evaluating children for node {self.id} ({self.type}), called from node {father}')
 
         # --- PROCESSING ---
         newancestry: list[str] = ancestry.copy()
         newancestry.append(self.id)
 
-        total: float # item / min
-        if self.type=="item":
-            if self.id not in self.graph.baseresource: # only try to create a child if its not a base resource
+        total: float  # item / min
+        if self.type == "item":
+            if self.id not in self.graph.baseresource:  # only try to create a child if its not a base resource
                 if self.id in self.graph.recipes:
                     recipe = self.graph.recipes[self.id]
                 else:
                     recipe = selectRecipe(self.id)
                     self.graph.recipes[self.id] = recipe
-                
+
                 if DEBUG:
                     print(f'\tSelected recipe {recipe} for item {self.id}')
 
                 total = self.getRequired(recipe)
-                current: float = 0 # item / min
+                current: float = 0  # item / min
                 if recipe in self.children:
                     current = self.children[recipe]
 
                 if total != current:
                     if recipe:
                         recipe_data = data.data_recipes[recipe][0]
-                        rectotal: float = recipe_data['duration'] * total / (60 * getProductQuantity(recipe_data, self.id)) # number of machines
-                        self.createChild('recipe', recipe, total, rectotal, newancestry)
+                        rectotal: float = recipe_data['duration'] * total / (
+                            # number of machines
+                            60 * getProductQuantity(recipe_data, self.id))
+                        self.createChild('recipe', recipe,
+                                         total, rectotal, newancestry)
                     else:
                         if DEBUG:
-                            print(f'\tCould not find recipe for item {self.id}. Adding to base resource')
-                        self.graph.baseresource.add(self.id) # add it to base resource if no recipe is available
+                            print(
+                                f'\tCould not find recipe for item {self.id}. Adding to base resource')
+                        # add it to base resource if no recipe is available
+                        self.graph.baseresource.add(self.id)
                 elif DEBUG:
                     print(f'Item {self.id} is balanced')
             elif DEBUG:
-                print(f'\tItem {self.id} is a base resource. Stopping research')
+                print(
+                    f'\tItem {self.id} is a base resource. Stopping research')
         else:
-            total = self.getRequired() # number of machines
+            total = self.getRequired()  # number of machines
 
             if total < 0:
-                raise ValueError(f'Tried to compute children for negative amount ({total}) of recipe {self.id}. This should not happen')
+                raise ValueError(
+                    f'Tried to compute children for negative amount ({total}) of recipe {self.id}. This should not happen')
 
             if self.id == self.graph.start:
                 recipe_data = self.graph.target
@@ -362,26 +392,30 @@ class Node():
 
             comp: dict[str]
             item: str
-            amount: float # item / min
+            amount: float  # item / min
             for comp in recipe_data['ingredients']:
                 item = comp['item']
-                amount = float(60.0 * comp['amount'] * total / recipe_data['duration'])
+                amount = float(60.0 * comp['amount']
+                               * total / recipe_data['duration'])
                 self.createChild('item', item, amount, 0, newancestry)
-            
+
             for comp in recipe_data['products']:
                 item = comp['item']
-                amount = float(60.0 * comp['amount'] * total / recipe_data['duration'])
-                if item != father: # dont try to create calling node
+                amount = float(60.0 * comp['amount']
+                               * total / recipe_data['duration'])
+                if item != father:  # dont try to create calling node
                     self.createParent('item', item, amount, newancestry)
 
-class Graph(): 
+
+class Graph():
     """
     Graph
     """
     start: str = 'start'
     nodes: dict[str, Node]
 
-    target: dict[str] # list of items to produce and their quantity as a custom recipe
+    # list of items to produce and their quantity as a custom recipe
+    target: dict[str]
 
     baseresource: set[str]
     recipes: dict[str, str]
@@ -420,9 +454,10 @@ class Graph():
 
     def setTarget(self, target: dict[str]):
         if DEBUG:
-            print(f'Setting target(s):\n\t{', '.join([f'{item}: {amount}' for item, amount in target.items()])}')
+            print(
+                f'Setting target(s):\n\t{', '.join([f'{item}: {amount}' for item, amount in target.items()])}')
         self.target = createCustomRecipe(target)
-    
+
     def addNode(self, node: Node):
         node.graph = self
         self.nodes[node.id] = node
@@ -432,13 +467,14 @@ class Graph():
             print(f'\tRemoving node {id}')
 
         if id in self.nodes:
-            children: list[str] = list(self.nodes[id].children) # create a separate object to iterate on
+            # create a separate object to iterate on
+            children: list[str] = list(self.nodes[id].children)
             for child in children:
                 self.nodes[id].disconnectChild(child)
                 if self.nodes[child].isOrphaned():
                     self.deleteNode(child)
                 else:
-                    self.nodes[child].createChildren([id]) # recompute child ?
+                    self.nodes[child].createChildren([id])  # recompute child ?
 
             self.nodes.pop(id)
         else:
@@ -456,7 +492,7 @@ class Graph():
             if node.isOrphaned():
                 orphaned.append(id)
 
-        if DEBUG and len(orphaned)==0:
+        if DEBUG and len(orphaned) == 0:
             print('\tNo orphaned nodes')
 
         for id in orphaned:
@@ -471,18 +507,18 @@ class Graph():
         balance: dict[str, float] = {}
         amount: float
         for id, node in self.nodes.items():
-            if node.type =='item':
+            if node.type == 'item':
                 amount = node.getRequired()
-                if ((filt=='positive' and amount > 0)
-                    or (filt=='positive' and amount < 0)
-                    or filt=='all'):
+                if ((filt == 'positive' and amount > 0)
+                    or (filt == 'positive' and amount < 0)
+                        or filt == 'all'):
                     balance[id] = amount
         return balance
 
     def getUnbalanced(self) -> list[str]:
         if DEBUG:
             print('Checking node balance...')
-        
+
         unbalanced: list[str] = []
         balance = self.getBalance()
         for id, amount in balance.items():
@@ -491,29 +527,31 @@ class Graph():
                 if DEBUG:
                     print(f'\tNode {id} has a balance of {balance[id]:+}')
 
-        if DEBUG and len(unbalanced)==0:
+        if DEBUG and len(unbalanced) == 0:
             print('\tAll nodes are balanced !')
 
         return unbalanced
-    
+
     def compute(self, fromnode: str = 'start'):
         if DEBUG:
             print(f'Computing graph from node {fromnode}')
         if fromnode not in self.nodes:
             raise ValueError(f'Node {fromnode} does not exist in this graph')
-        
+
         unbalanced: list[str] = [fromnode]
         i: int = 0
         while len(unbalanced) > 0 and i < MAX_ITER:
             if DEBUG:
                 print(f'Computing round number {i}')
-            self.nodes[unbalanced[0]].createChildren([]) # start of computation has no parent
+            self.nodes[unbalanced[0]].createChildren(
+                [])  # start of computation has no parent
 
             self.cleanOprhaned()
 
             unbalanced: list[str] = self.getUnbalanced()
             if DEBUG:
-                print(f'Unbalanced nodes at round {i}: {', '.join(unbalanced)}')
+                print(
+                    f'Unbalanced nodes at round {i}: {', '.join(unbalanced)}')
             i += 1
         if i >= MAX_ITER:
             message: str = f'Could not balance graph after {MAX_ITER} attempts: {', '.join(unbalanced)}'
@@ -525,11 +563,12 @@ class Graph():
         self.nodes[fromnode].updateDepthAndChildren()
 
         topop: list[str] = []
-        for item in self.recipes: # remove items that disappeared
+        for item in self.recipes:  # remove items that disappeared
             if item not in self.nodes:
                 topop.append(item)
 
-        print(f'Removing unused recipes: {', '.join(topop)}')
+        if DEBUG:
+            print(f'Removing unused recipes: {', '.join(topop)}')
 
         for item in topop:
             self.recipes.pop(item)
@@ -543,7 +582,7 @@ class Graph():
 
         # if item not in self.nodes:
         #     raise ValueError(f'Item {item} is not part of this plan')
-        
+
         hasnode: bool = item in self.recipes
         oldrecipe: str
         if hasnode:
@@ -553,20 +592,23 @@ class Graph():
 
         if item in self.baseresource:
             self.baseresource.pop(item)
-        
+
         if recompute:
             if hasnode:
-                self.nodes[item].connectChild(oldrecipe, 0, 0, True) # remove item from old recipe active parents
-                if self.nodes[oldrecipe].isOrphaned(): # delete old recipe or recompute it
+                # remove item from old recipe active parents
+                self.nodes[item].connectChild(oldrecipe, 0, 0, True)
+                # delete old recipe or recompute it
+                if self.nodes[oldrecipe].isOrphaned():
                     self.deleteNode(oldrecipe)
                 else:
                     self.nodes[oldrecipe].createChildren([item])
 
-            self.compute(item) # recompute children for item
+            self.compute(item)  # recompute children for item
 
     # interface methods
     def flatten(self) -> dict[str]:
-        flat: dict[str] = {"start": self.start, "target": self.target, "baseresource": list(self.baseresource), "recipes": self.recipes, "nodes": {}}
+        flat: dict[str] = {"start": self.start, "target": self.target, "baseresource": list(
+            self.baseresource), "recipes": self.recipes, "nodes": {}}
         for id, node in self.nodes.items():
             flat["nodes"][id] = node.flatten()
         return flat
@@ -583,7 +625,7 @@ class Graph():
         amount: float
         color: str
         label: str
-        for node in self.nodes.values(): # first add all nodes
+        for node in self.nodes.values():  # first add all nodes
             if node.id == self.start:
                 color = self.colormap['start']
             elif len(node.parents) == 0:
@@ -593,11 +635,11 @@ class Graph():
             else:
                 color = self.colormap[node.type]
             label = node.id
-            if node.type=='recipe':
+            if node.type == 'recipe':
                 label += f' ({sum(node.activeparents.values()):2f})'
             G.add_node(node.id, color=color, label=label, depth=node.depth)
 
-        for node in self.nodes.values(): # then add all connections
+        for node in self.nodes.values():  # then add all connections
             for child, amount in node.children.items():
                 G.add_edge(node.id, child, label=amount)
 
@@ -607,7 +649,8 @@ class Graph():
 
         colors = [data["color"] for _, data in G.nodes(data=True)]
         node_labels = nx.get_node_attributes(G, "label")
-        nx.draw_networkx_nodes(G, pos, node_color=colors, node_size=[len(node_labels[i])**2 * 60 for i in pos])
+        nx.draw_networkx_nodes(G, pos, node_color=colors, node_size=[
+                               len(node_labels[i])**2 * 60 for i in pos])
         nx.draw_networkx_edges(G, pos)
         nx.draw_networkx_labels(G, pos, node_labels, font_color='white')
 
@@ -631,6 +674,7 @@ class Graph():
                 nodes.append(node)
         return nodes
 
+
 def testRun(debug: bool = True):
     global DEBUG
     DEBUG = debug
@@ -648,7 +692,7 @@ def testRun(debug: bool = True):
     # graph.alterRecipe('Desc_ModularFrame_C', 'Recipe_Alternate_ModularFrame_C') # place recipe change here
 
     # end2 = time.time()
-    
+
     # print('Execution time: %s s'%(end-start))
     # print('Recompute time: %s s'%(end2-end))
     # print('Total time: %s s'%(end2-start))
@@ -656,27 +700,31 @@ def testRun(debug: bool = True):
     print(graph.flatten())
     graph.show(True)
 
+
 def computeVsRecompute():
     """
     function to compare computing vs recomputing
     plans should be exactly the same, apart for the order of nodes
     """
     import json
-    
+
     target: dict[str] = {"Desc_ModularFrame_C": 10}
-    
+
     graph1 = Graph(target)
     graph1.compute()
-    graph1.alterRecipe('Desc_ModularFrame_C', 'Recipe_Alternate_ModularFrame_C', True)
+    graph1.alterRecipe('Desc_ModularFrame_C',
+                       'Recipe_Alternate_ModularFrame_C', True)
 
     graph2 = Graph(target)
-    graph2.alterRecipe('Desc_ModularFrame_C', 'Recipe_Alternate_ModularFrame_C', False)
+    graph2.alterRecipe('Desc_ModularFrame_C',
+                       'Recipe_Alternate_ModularFrame_C', False)
     graph2.compute()
 
     with open('output\\graph1.json', 'w') as f:
         json.dump(graph1.flatten(), f)
     with open('output\\graph2.json', 'w') as f:
         json.dump(graph2.flatten(), f)
+
 
 ### Main code ###
 if MAIN:
