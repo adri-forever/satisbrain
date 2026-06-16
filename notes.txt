@@ -1,5 +1,8 @@
 Fonctions:
     plusieurs onglets ? Plans parallèles
+    ajouter une barre de recherche dans le bloc de resource de base
 
 Style:
     tables: refaire les contours (enlever celui du tour de la table ?)
+
+    refactoriser le CSS pour utiliser des layers et du nesting

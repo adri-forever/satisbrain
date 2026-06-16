@@ -32,7 +32,7 @@ function changeStatus(that) {
 function exportPlan() {
     let elmnt = document.createElement('a');
     elmnt.download = 'plan.json';
-    elmnt.href = `data:application/json;charset=utf-8,${JSON.stringify(json)}`;
+    elmnt.href = `data:application/json;charset=utf-8,${JSON.stringify(dataobj)}`;
     elmnt.click();
 }
 
@@ -64,9 +64,10 @@ function showUpload(that) {
     $('input.import')[0].click();
 }
 
-// function importPlan() {
-//     send(imported);
-// }
+function checkFillKey(fromjson, tojson, key) {
+    if (fromjson.hasOwnProperty(key))
+        tojson[key] = fromjson[key];
+}
 
 async function send(payload) {
     if (DEBUG) {console.log('send:', payload);}
@@ -80,21 +81,17 @@ async function send(payload) {
     DEBUG = result.DEBUG === 'true';
     if (DEBUG) {console.log(result);}
 
-    if (result.hasOwnProperty("recipes")) {
-        json["recipes"] = result["recipes"];
-    }
-    if (result.hasOwnProperty("baseresource")) {
-        json["baseresource"] = result["baseresource"];
-    }
-    if (result.hasOwnProperty("dictionary")) {
-        dictionary = result["dictionary"];
-    }
+    checkFillKey(result, dataobj, "nodes");
+    checkFillKey(result, dataobj, "recipes");
+    checkFillKey(result, dataobj, "baseresource");
+    checkFillKey(result, dataobj, "dictionary");
     if (result.hasOwnProperty("target")) {
-        target = {};
+        let target = {};
         if (result["target"].hasOwnProperty("ingredients"))
             for (let i=0; i<result["target"]["ingredients"].length; i++) {
                 target[result["target"]["ingredients"][i]["item"]] = result["target"]["ingredients"][i]["amount"];
             }
+        dataobj["target"] = target
     }
     if (result.hasOwnProperty("html")) {
         // replace content with built html
@@ -107,7 +104,7 @@ function validateItemLegacy(box) {
     var obj = {};
     var item = box.find('.selector select').val();
     obj[item] = 1;
-    json["target"] = obj;
+    dataobj["target"] = obj;
 }
 
 function validateItem(box) {
@@ -119,22 +116,22 @@ function validateItem(box) {
         if (!target.hasOwnProperty(item)) { target[item] = 0; }
         if (amount) { target[item] += amount; }
     });
-    json["target"] = target;
+    dataobj["target"] = target;
 }
 
 function validateRecipe(box) {
     let item = box.attr('data-item');
     let value = box.find('.selector select').val();
     if (value == 'baseresource') {
-        if (!json.hasOwnProperty("baseresource")) {
-            json["baseresource"] = [];
+        if (!dataobj.hasOwnProperty("baseresource")) {
+            dataobj["baseresource"] = [];
         }
-        json["baseresource"].push(item);
+        dataobj["baseresource"].push(item);
     } else {
-        if (!json.hasOwnProperty("recipes")) {
-            json["recipes"] = {};
+        if (!dataobj.hasOwnProperty("recipes")) {
+            dataobj["recipes"] = {};
         }
-        json["recipes"][item] = value;
+        dataobj["recipes"][item] = value;
     }
 }
 
@@ -142,10 +139,10 @@ function removeBaseresource(that) {
     let item = $(that).closest('.resource').attr('data-item');
     let index = -1;
 
-    if (json.hasOwnProperty("baseresource")) {
-        index = json["baseresource"].indexOf(item); // find index of requested item to remove from list
+    if (dataobj.hasOwnProperty("baseresource")) {
+        index = dataobj["baseresource"].indexOf(item); // find index of requested item to remove from list
         if (index >= 0) {
-            json["baseresource"].splice(index, 1); // remove 1 element at index
+            dataobj["baseresource"].splice(index, 1); // remove 1 element at index
         }
     }
 }
@@ -170,7 +167,7 @@ function validate(that) {
         console.log('Could not validate box with classes ' + Array.from(classes).join(', '))
     }
 
-    send(json);
+    send(dataobj);
 }
 
 function getBaseresourceEntry(item) {
@@ -277,8 +274,13 @@ function addItem(that, item, amount, init) {
 }
 
 function initItemInput() {
-    if (Object.keys(target).length > 0) {
-        for (const [item, amount] of Object.entries(target)) {
+    let haskey = Object.keys(dataobj).includes("target");
+    let hasitem = false; // will stay false if no key
+    if (haskey) {
+        hasitem = Object.keys(dataobj["target"]).length > 0;
+    }
+    if (hasitem) {
+        for (const [item, amount] of Object.entries(dataobj["target"])) {
             addItem(this, item, amount, false);
         }
     } else {
@@ -287,17 +289,21 @@ function initItemInput() {
 }   
 
 function initBaseResource() {
-    if (json['baseresource']) {
+    if (dataobj['baseresource']) {
         let items = []; 
         let itemname;
+        let itemdesc;
 
         // get translation for all items
-        for (let i=0; i<json['baseresource'].length; i++) {
-            itemname = json['baseresource'][i];
-            if (dictionary["items"][json['baseresource'][i]]) {
-                itemname = dictionary["items"][json['baseresource'][i]];
+        for (let i=0; i<dataobj['baseresource'].length; i++) {
+            itemname = dataobj['baseresource'][i];
+            
+            if (Object.keys(dataobj["nodes"]).includes(itemname)) { // only create handler button if item is present in plan
+                itemdesc = dataobj["dictionary"]["items"][dataobj['baseresource'][i]];
+                if (!itemdesc) { itemdesc = itemname; } // if we do not find translation, show raw item name 
+                
+                items.push({"item": dataobj['baseresource'][i], "name": itemdesc});
             }
-            items.push({"item": json['baseresource'][i], "name": itemname});
         }
 
         // sort alphabetically
@@ -327,9 +333,7 @@ const DIGITS = 3;
 var DEBUG = false;
 
 var imported = {};
-var target = {};
-var json = {};
-var dictionary = {};
+var dataobj = {};
 var factor = 1;
 
 $().ready(() => {

@@ -1,13 +1,16 @@
-from python import data  # , utils
 import copy
 import os
-import sys  # , time
+import json
+import sys
 from typing import Literal
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+LOCALPATH: Path = Path(__file__).resolve()
+sys.path.append(str(LOCALPATH.parent)) # for neighbouring modules
+sys.path.append(str(LOCALPATH.parent.parent)) # i don t remember why
 
 # personal imports
+import data
 
 # Constants
 MAIN: bool = __name__ == '__main__'
@@ -228,7 +231,7 @@ class Node():
         if itemamount > 0:
             self.children[child] = itemamount
             node.parents[self.id] = itemamount
-        else:
+        elif child in self.children: # link may not have been established yet and already needs removal
             self.children.pop(child)
             node.parents.pop(self.id)
 
@@ -236,7 +239,7 @@ class Node():
             if recamount > 0:
                 # indicate to recipe the reason for which its been created
                 node.activeparents[self.id] = recamount
-            else:
+            elif self.id in node.activeparents: # dont know how a recipe could have been created without active parents but sure :/
                 node.activeparents.pop(self.id)
 
     def createChild(self, type: Literal["recipe", "item"], id: str, itemamount: float, recamount: float, ancestry: list[str] = []):
@@ -393,18 +396,18 @@ class Node():
             comp: dict[str]
             item: str
             amount: float  # item / min
-            for comp in recipe_data['ingredients']:
-                item = comp['item']
-                amount = float(60.0 * comp['amount']
-                               * total / recipe_data['duration'])
-                self.createChild('item', item, amount, 0, newancestry)
-
             for comp in recipe_data['products']:
                 item = comp['item']
                 amount = float(60.0 * comp['amount']
                                * total / recipe_data['duration'])
                 if item != father:  # dont try to create calling node
                     self.createParent('item', item, amount, newancestry)
+
+            for comp in recipe_data['ingredients']:
+                item = comp['item']
+                amount = float(60.0 * comp['amount']
+                               * total / recipe_data['duration'])
+                self.createChild('item', item, amount, 0, newancestry)
 
 
 class Graph():
@@ -700,13 +703,26 @@ def testRun(debug: bool = True):
     print(graph.flatten())
     graph.show(True)
 
+def debugDarkMat(debug: bool = True):
+    global DEBUG
+    DEBUG = debug
+
+    payload: str = """{"target":{"Desc_TemporalProcessor_C":3,"Desc_SpaceElevatorPart_11_C":4,"Desc_QuantumOscillator_C":2},"recipes":{"Desc_AluminumPlate_C":"Recipe_AluminumSheet_C","Desc_Cement_C":"Recipe_Concrete_C","Desc_ComputerSuper_C":"Recipe_ComputerSuper_C","Desc_CrystalOscillator_C":"Recipe_CrystalOscillator_C","Desc_DarkEnergy_C":"Recipe_DarkEnergy_C","Desc_DarkMatter_C":"Recipe_Alternate_DarkMatter_Trap_C","Desc_Diamond_C":"Recipe_Diamond_C","Desc_FicsiteMesh_C":"Recipe_FicsiteMesh_C","Desc_IronIngot_C":"Recipe_IngotIron_C","Desc_IronPlate_C":"Recipe_IronPlate_C","Desc_QuantumEnergy_C":"Recipe_QuantumEnergy_C","Desc_QuantumOscillator_C":"Recipe_SuperpositionOscillator_C","Desc_SAMIngot_C":"Recipe_IngotSAM_C","Desc_SingularityCell_C":"Recipe_SingularityCell_C","Desc_SpaceElevatorPart_11_C":"Recipe_SpaceElevatorPart_11_C","Desc_SpaceElevatorPart_8_C":"Recipe_SpaceElevatorPart_8_C","Desc_SpaceElevatorPart_9_C":"Recipe_SpaceElevatorPart_9_C","Desc_TemporalProcessor_C":"Recipe_TemporalProcessor_C","Desc_TimeCrystal_C":"Recipe_TimeCrystal_C"},"baseresource":["Desc_Shroom_C","Desc_NitrogenGas_C","Desc_TimeCrystal_C","Desc_OreBauxite_C","Desc_Mycelia_C","Desc_ResourceSinkCoupon_C","Desc_RawQuartz_C","Desc_OreGold_C","Desc_Sulfur_C","Desc_WAT2_C","Desc_DissolvedSilica_C","Desc_Crystal_C","Desc_Nut_C","Desc_StingerParts_C","Desc_Stone_C","Desc_FicsiteMesh_C","Desc_CrystalOscillator_C","Desc_Leaves_C","Desc_WAT1_C","Desc_HogParts_C","Desc_SpaceElevatorPart_9_C","Desc_OreUranium_C","Desc_Berry_C","Desc_Gift_C","Desc_LiquidOil_C","Desc_Water_C","Desc_OreIron_C","Desc_ComputerSuper_C","Desc_Wood_C","Desc_OreCopper_C","Desc_HatcherParts_C","Desc_AluminumPlate_C","Desc_Crystal_mk3_C","Desc_Cement_C","Desc_Coal_C","Desc_SAM_C","Desc_SpaceElevatorPart_8_C","Desc_Crystal_mk2_C","Desc_SpitterParts_C","Desc_IronPlate_C","Desc_IronPlate_C","Desc_SAMIngot_C","Desc_SAMIngot_C"]}"""
+    obj: dict = json.loads(payload)
+
+    graph = Graph(obj["target"], obj["baseresource"], obj["recipes"])
+
+    graph.compute()
+    print('Travail terminé')
+    print(graph.flatten())
+    graph.show(True)
 
 def computeVsRecompute():
     """
     function to compare computing vs recomputing
     plans should be exactly the same, apart for the order of nodes
     """
-    import json
+    # import json
 
     target: dict[str] = {"Desc_ModularFrame_C": 10}
 
@@ -728,4 +744,5 @@ def computeVsRecompute():
 
 ### Main code ###
 if MAIN:
-    testRun()
+    # testRun()
+    debugDarkMat(True)
