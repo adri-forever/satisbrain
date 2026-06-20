@@ -71,13 +71,22 @@ function checkFillKey(fromjson, tojson, key) {
 
 async function send(payload) {
     if (DEBUG) {console.log('send:', payload);}
-    let response = await fetch('/send', {
-        method: 'post',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-    });
 
-    let result = await response.json();
+    let response;
+    let result;
+    try {
+        response = await fetch('/send', {
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        result = await response.json();
+    } catch (e) {
+        alert("Error :(\nTry resetting the base resource");
+        return;
+    }
+    
     DEBUG = result.DEBUG === 'true';
     if (DEBUG) {console.log(result);}
 
@@ -174,7 +183,7 @@ function getBaseresourceEntry(item) {
     entry = $('<div>').addClass('resource').attr('data-item', item.item).append(
         $('<span>').text(item.name)
     ).append(
-        $('<button>').addClass('delete').attr('onclick', 'validate(this)')
+        $('<button>').addClass('delete smallbutton').attr('onclick', 'validate(this)')
     )
     return entry;
 }
@@ -256,7 +265,7 @@ function addItem(that, item, amount, init) {
     ).append(
         $('<span>').addClass('small').text('/min')
     ).append(
-        $('<button>').addClass('delete').attr('onclick', 'removeItem(this)')
+        $('<button>').addClass('delete smallbutton').attr('onclick', 'removeItem(this)')
     ).insertBefore(
         $('.box.item_multi > .content .buttons')
     );
@@ -287,6 +296,11 @@ function initItemInput() {
         addItem(this, null, null, false);
     }
 }   
+
+function resetBaseResource() {
+    delete dataobj["baseresource"];
+    send(dataobj);
+}
 
 function initBaseResource() {
     if (dataobj['baseresource']) {

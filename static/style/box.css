@@ -1,141 +1,149 @@
 /* General */
-.box { display: inline-block; }
+.box {
+	display: inline-block;
 
-.box.tier { width: 100%; }
+	&.tier { width: 100%; }
 
-.box > .content {
-	border: 1px dashed var(--gray5);
-	border-top-width: 0;
-	padding: 5px;
-	overflow: hidden;
+	> .content {
+		border: 1px dashed var(--gray5);
+		border-top-width: 0;
+		padding: 5px;
+		overflow: hidden;
 
-	display: flex;
-	flex-wrap: wrap;
-}
+		display: flex;
+		flex-wrap: wrap;
+	}
 
-.box.container > .content {
-	gap: 20px;
-}
+	&.container > .content {
+		gap: 20px;
+	}
 
-/* Header */
-.box > .header {
-	background: var(--gray5);
+	/* Header */
+	> .header {
+		background: var(--gray5);
+		
+		font-weight: bold;
+		font-size: large;
+
+		padding: 5px;
+		padding-left: 10px;
+
+		display: flex;
+		justify-content: space-between;
+		gap: 2rem;
+
+		white-space: nowrap;
+		
+		.title1, .title2 { padding: 3px 0 1.7px 9px; } /* mimic the dropdown placement for a somewhat seamless transition*/
+		.title2 { display: none; }
+
+		> .left, > .right { display: flex; gap: 1rem; }
+
+		button.collapse { display: unset; } /* Collapse button always available */
+
+		> .selector { display: none; }
+	}
+	&.recipe > .header .title2 { display: unset; } /* only show title2 for recipes */
+
+	/* Buttons */
+	> .header button { display: none; }
+
+	&.item, &.recipe {
+		.header {
+			button.status, button.edit { display: unset; } /* Edit and status buttons are available for reciepes and items */
+		}
+	}
+
+	&.edit {
+		&.item, &.recipe {
+			button.validate { display: unset; } /* Validate button is only available in edition */
+		}
+
+		> .header {
+			.selector, .selector select { display: unset; } /* Show dropdown in edit mode*/
+		}
+
+		
+		&.item > .header .title1,
+		&.recipe > .header .title2 { display: none; } /* Hide first title for item, hide second for recipe */
+	}
+
+	&.collapsed > .content { height: 0px; padding: 0; }
+
+	/* Header input */
+	.selector {
+		select { display: none; }
+		.select2-selection { background: inherit; }
+		.select2-selection__rendered { color: inherit; }
+		.select2-selection__arrow b { border-color: white transparent transparent transparent; }
+		.select2-container--open .select2-selection__arrow b { border-color: transparent transparent white transparent; }
+		.select2-container--open .select2-selection { border-color: var(--orangesatis); border-bottom: 0;}
+
+		&:hover {
+			color: var(--orangesatis);
+			
+			.select2-selection { border-color: var(--orangesatis); }
+			.select2-selection__arrow b { border-color: var(--orangesatis) transparent transparent transparent; }
+			.select2-container--open .select2-selection__arrow b { border-color: transparent transparent var(--orangesatis) transparent; }
+		}
+	}
+
+	/* Multi item input */
+	&.item_multi > .content {
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+		
+		> .item {
+			display: flex;
+			flex-direction: row;
+			gap: 5px;
+
+			input.amount { margin-left: auto; width: 75px; text-align: right; }
+		}
 	
-	font-weight: bold;
-	font-size: large;
+		> .buttons {
+			display: flex;
+			flex-direction: row-reverse;
+			gap: 5px
+		}
 
-	padding: 5px;
-	padding-left: 10px;
+		span.small { margin-top: auto; }
+	}
 
-	display: flex;
-	justify-content: space-between;
-	gap: 2rem;
+	/* Base resource box */
+	.baseresource .content {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		gap: 5px;
 
-	white-space: nowrap;
-}
+		max-height: 30vh;
+		overflow-y: auto;
 
-.box > .header .title1,
-.box > .header .title2 { padding: 3px 0 1.7px 9px; } /* mimic the dropdown placement for a somewhat seamless transition*/
-.box > .header .title2 { display: none; }
-.box.recipe > .header .title2 { display: unset; } /* only show title2 for recipes */
+		.resource {
+			border: 1px dashed var(--gray5);
+			padding: 3px 3px 3px 5px;
+			display: flex;
+			align-items: center;
+	
+			button.delete {
+				margin-left: auto;
+				aspect-ratio: 1;
+				padding: 0;
+				min-width: 1.75rem;
+				
+				&::before {
+					content: "\e872";
+					margin: 0;
+				}
+			}
+		}
+	}
 
-.box > .header > .left, .box > .header > .right { display: flex; gap: 1rem; }
-
-/* Buttons */
-.box > .header button { display: none; }
-.box button { aspect-ratio: 1; padding: 0; min-width: 1.75rem; }
-.box button::before { margin: 0; }
-
-.box.item > .header button.status,
-.box.recipe > .header button.status,
-.box.item > .header button.edit,
-.box.recipe > .header button.edit { display: unset; }  /* Edit and status buttons are available for reciepes and items */
-
-.box.edit.item > .header button.validate,
-.box.edit.recipe > .header button.validate { display: unset; } /* Validate button is only available in edition */
-
-.box > .header button.collapse { display: unset; } /* Collapse button always available */
-.box.collapsed > .content { height: 0px; padding: 0; }
-
-/* Header input */
-.box .selector select { display: none; }
-.box .selector .select2-selection { background: inherit; }
-.box .selector .select2-selection__rendered { color: inherit; }
-
-.box .select2-container--default .select2-selection--single { border-radius: 0; }
-.box .selector:hover .select2-selection { border-color: var(--orangesatis); }
-.box .selector .select2-container--open .select2-selection { border-color: var(--orangesatis); border-bottom: 0;}
-
-.box .selector .select2-selection__arrow b { border-color: white transparent transparent transparent; }
-.box .selector .select2-container--open .select2-selection__arrow b { border-color: transparent transparent white transparent; }
-.box .selector:hover .select2-selection__arrow b { border-color: var(--orangesatis) transparent transparent transparent; }
-.box .selector:hover .select2-container--open .select2-selection__arrow b { border-color: transparent transparent var(--orangesatis) transparent; }
-.box .selector:hover { color: var(--orangesatis); }
-
-.select2-container .select2-dropdown { background: var(--gray5); border-radius: 0; border-color: var(--orangesatis);}
-.select2-container--default .select2-results .select2-results__option--selected { background: var(--gray5); }
-.select2-container--default .select2-results .select2-results__option--highlighted.select2-results__option--selectable { background: var(--orangesatis); }
-.select2-container .select2-dropdown input { background: inherit; color: inherit; font: inherit; }
-
-.box > .header .selector { display: none; }
-.box.edit > .header .selector, .box.edit > .header .selector select { display: unset; } /* Show dropdown in edit mode*/
-.box.item.edit > .header .title1,
-.box.recipe.edit > .header .title2 { display: none; } /* Hide first title for item, hide second for recipe */
-
-/* Multi item input */
-.box.item_multi > .content {
-	display: flex;
-	flex-direction: column;
-	gap: 5px;
-}
-
-.box.item_multi > .content > .item {
-	display: flex;
-	flex-direction: row;
-	gap: 5px;
-}
-.box.item_multi > .content > .item input.amount { margin-left: auto; width: 75px; }
-
-.box.item_multi > .content > .buttons {
-	display: flex;
-	flex-direction: row-reverse;
-	gap: 5px
-}
-
-.box.item_multi > .content span.small { margin-top: auto; }
-.box.item_multi > .content input.amount { text-align: right; }
-
-/* Base resource box */
-.box.baseresource .content {
-	display: flex;
-	flex-direction: column;
-	flex-wrap: nowrap;
-	gap: 5px;
-
-	max-height: 30vh;
-	overflow-y: auto;
-}
-
-.box.baseresource .resource {
-	border: 1px dashed var(--gray5);
-	padding: 3px 3px 3px 5px;
-	display: flex;
-	align-items: center;
-}
-
-.box.baseresource .resource button.delete {
-	margin-left: auto;
-	aspect-ratio: 1;
-	padding: 0;
-	min-width: 1.75rem;
-}
-
-.box.baseresource .resource button.delete::before {
-	content: "\e872";
-	margin: 0;
-}
-
-.box.configuration > .content > .box,
-.box.information > .content > .box{
-	max-width: 450px;
+	&.configuration, &.information {
+		> .content > .box {
+			max-width: 450px;
+		}
+	}
 }

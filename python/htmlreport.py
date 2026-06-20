@@ -124,11 +124,10 @@ def generateMachines(a: airium.Airium, graph: Graph):
                     i = machines.index(machine)
                     amounts[i] += node.getRequired()
 
-                    if machine == 'Desc_HadronCollider_C':
+                    power = machine_data['powerUsage'] - machine_data['powerGenerated']
+                    if power == 0:
                         power = (recipe_data["minPower"] +
                                  recipe_data["maxPower"])/2
-                    else:
-                        power = machine_data['powerUsage']
                     powers[i] += power*amounts[i]
 
     if machines:
@@ -171,7 +170,7 @@ def generate_box(a: airium.Airium, boxclass: str = '', item: str = '', recipe: s
     with a.div(klass=f"box {boxclass}{" edit" if edit else ""}{" collapsed" if collapsed else ""}", **{"data-item": item}):
         with a.div(klass="header"):
             with a.div(klass="left"):
-                a.button(klass="status", onclick="changeStatus(this)")
+                a.button(klass="status smallbutton", onclick="changeStatus(this)")
                 a.div(klass="title1", _t=title)
                 a.div(klass="title2", _t=title2)
                 if boxclass in ["item", "recipe"]:
@@ -182,9 +181,9 @@ def generate_box(a: airium.Airium, boxclass: str = '', item: str = '', recipe: s
                                 selection["selected"] = "selected"
                             a.option(_t=value, value=key, **selection)
             with a.div(klass="right"):
-                a.button(klass="validate", onclick="validate(this)")
-                a.button(klass="edit", onclick="toggleEdit(this)")
-                a.button(klass="collapse",
+                a.button(klass="validate smallbutton", onclick="validate(this)")
+                a.button(klass="edit smallbutton", onclick="toggleEdit(this)")
+                a.button(klass="collapse smallbutton",
                          onclick="toggleCollapse(this, event)")
         with a.div(klass="content"):
             if (boxclass == "item" and item in data.data_items):
@@ -218,10 +217,10 @@ def generateHtmlFlask(graph=Graph()) -> str:
                     for key, value in data.data_items.items():
                         a.option(_t=value[0]['name'], value=key)
             with a.div(klass='buttons'):
-                a.button(klass="validate", onclick="validate(this)")
-                a.button(klass="add", onclick="addItem(this, null, null, true)")
-        with generate_box(a, 'baseresource', '', '', 'Base resource handler', False, False):
-            pass
+                a.button(klass="validate smallbutton", onclick="validate(this)")
+                a.button(klass="add smallbutton", onclick="addItem(this, null, null, true)")
+        with generate_box(a, 'baseresource', '', '', 'Base resource', False, False):
+            a.button(klass="reset", onclick="resetBaseResource()", _t="Reset")
         with a.div(klass='loads'):
             a.button(klass='export', onclick='exportPlan(this)', _t='Export')
             a.input(klass='import', id=uuid.uuid4(),
